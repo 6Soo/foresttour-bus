@@ -255,29 +255,7 @@ main {
     pointer-events: none;
 }
 
-.legend {
-    display: flex;
-    gap: 1.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1rem 2rem;
-    border-radius: 100px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.seat-shape {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
@@ -371,7 +349,7 @@ main {
             <div id="capture-area" class="capture-area">
                 <div class="trip-header">
                     <h1>숲길따라 감성여행</h1>
-                    <h2 id="trip-name" contenteditable="true" data-placeholder="여행 이름 입력 (예: 0827_0829 군산 버스 좌석표)">0827_0829 군산 버스 좌석표</h2>
+                    <h2 id="trip-name" contenteditable="true" data-placeholder="여행 이름 입력 (예: 0704_0709 야마가타 버스 좌석표)">0704_0709 야마가타 버스 좌석표</h2>
                 </div>
 
                 <div class="layout-wrapper">
@@ -379,22 +357,6 @@ main {
                 <div id="bus-view" class="bus-container">
                     <!-- Bus layout will be injected here via JS -->
                 </div>
-            </div>
-            
-            <div class="legend">
-                    <span class="legend-title">📌 좌석 색상 안내:</span>
-                    <div class="legend-item">
-                    <div class="seat-shape available"></div>
-                    <span>일반 좌석</span>
-                </div>
-                    <div class="legend-item">
-                        <div class="seat-shape driver"></div>
-                        <span>운전석</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="seat-shape door"></div>
-                        <span>출입문</span>
-                    </div>
             </div>
             </div>
             

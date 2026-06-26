@@ -247,29 +247,7 @@ main {
     pointer-events: none;
 }
 
-.legend {
-    display: flex;
-    gap: 1.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1rem 2rem;
-    border-radius: 100px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.seat-shape {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
