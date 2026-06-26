@@ -241,11 +241,6 @@ main {
     color: #fff;
 }
 
-.seat.guide {
-    background: var(--seat-guide);
-    color: #fff;
-}
-
 .seat.door {
     background: var(--seat-door);
     border: 1px dashed var(--text-secondary);
@@ -353,6 +348,10 @@ main {
                     <span class="bus-name">Hiace</span>
                     <span class="bus-capacity">14인승</span>
                 </button>
+                <button data-bus="hiace10">
+                    <span class="bus-name">Hiace</span>
+                    <span class="bus-capacity">10인승</span>
+                </button>
                 <button data-bus="grandcabin">
                     <span class="bus-name">Grand Cabin</span>
                     <span class="bus-capacity">10인승</span>
@@ -388,18 +387,14 @@ main {
                     <div class="seat-shape available"></div>
                     <span>일반 좌석</span>
                 </div>
-                <div class="legend-item">
-                    <div class="seat-shape driver"></div>
-                    <span>운전석</span>
-                </div>
-                <div class="legend-item">
-                    <div class="seat-shape guide"></div>
-                    <span>가이드석</span>
-                </div>
-                <div class="legend-item">
-                    <div class="seat-shape door"></div>
-                    <span>출입문</span>
-                </div>
+                    <div class="legend-item">
+                        <div class="seat-shape driver"></div>
+                        <span>운전석</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-shape door"></div>
+                        <span>출입문</span>
+                    </div>
             </div>
             </div>
             
@@ -428,6 +423,21 @@ const layouts = {
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
         ]
     },
+    hiace10: {
+        cols: 3,
+        seats: [
+            // Row 0: Passenger(L), Console, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2: Empty, Seat, Seat
+            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 3: Empty, Seat, Seat
+            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 4: Seat, Seat, Seat
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
+        ]
+    },
     grandcabin: {
         cols: 4,
         seats: [
@@ -444,8 +454,8 @@ const layouts = {
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Guide/Door(L), Empty, Empty, Driver(R)
-            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 0: Door(L), Empty, Empty, Driver(R)
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1-7: 1 seat(L), aisle, 2 seats(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },

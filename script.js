@@ -13,6 +13,21 @@ const layouts = {
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
         ]
     },
+    hiace10: {
+        cols: 3,
+        seats: [
+            // Row 0: Passenger(L), Console, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2: Empty, Seat, Seat
+            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 3: Empty, Seat, Seat
+            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 4: Seat, Seat, Seat
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
+        ]
+    },
     grandcabin: {
         cols: 4,
         seats: [
@@ -29,8 +44,8 @@ const layouts = {
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Guide/Door(L), Empty, Empty, Driver(R)
-            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 0: Door(L), Empty, Empty, Driver(R)
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1-7: 1 seat(L), aisle, 2 seats(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },

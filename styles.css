@@ -233,11 +233,6 @@ main {
     color: #fff;
 }
 
-.seat.guide {
-    background: var(--seat-guide);
-    color: #fff;
-}
-
 .seat.door {
     background: var(--seat-door);
     border: 1px dashed var(--text-secondary);
