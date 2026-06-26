@@ -1,16 +1,18 @@
 const layouts = {
-    hiace: {
+    japan28: {
         cols: 4,
         seats: [
-            // Row 0: Passenger(L), Empty, Empty, Driver(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 0: Seat 1, Refrigerator, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 2: Seat, Empty, Seat, Seat
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3: Seat, Empty, Seat, Seat
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 4: Seat, Seat, Seat, Seat
+            // Row 2-6: 1 seat(L), aisle seat, 2 seats(R) (Total 4 per row)
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 7: 4 seats across
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
