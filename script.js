@@ -2,11 +2,10 @@ const layouts = {
     japan28: {
         cols: 4,
         seats: [
-            // Row 0: Seat 1, Refrigerator, Empty, Driver(R)
-            { type: 'available', label: '' }, { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Door(L), Empty, Seat, Seat
-            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 2-6: 1 seat(L), aisle seat, 2 seats(R) (Total 4 per row)
+            // Row 0: Door, Refrigerator, Seat 1, Driver
+            { type: 'door', label: '출입문' }, { type: 'refrigerator', label: '냉장고' }, { type: 'available', label: '' }, { type: 'driver', label: '운전석' },
+            // Row 1-6: 1 seat(L), aisle seat, 2 seats(R) (Total 4 per row)
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
@@ -45,11 +44,10 @@ const layouts = {
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Seat 1, Refrigerator, Empty, Driver(R)
-            { type: 'available', label: '' }, { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Door(L), Empty, Seat, Seat
-            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 2-6: 1 seat(L), aisle, 2 seats(R)
+            // Row 0: Door, Refrigerator, Seat 1, Driver
+            { type: 'door', label: '출입문' }, { type: 'refrigerator', label: '냉장고' }, { type: 'available', label: '' }, { type: 'driver', label: '운전석' },
+            // Row 1-6: 1 seat(L), aisle, 2 seats(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
