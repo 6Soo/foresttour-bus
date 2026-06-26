@@ -11,10 +11,6 @@
 <body>
     <div class="app-container">
         <header>
-            <div class="header-content">
-                <h1>Premium Fleet Layouts</h1>
-                <p>여행사를 위한 프리미엄 버스 좌석 배치도</p>
-            </div>
             <nav class="bus-selector">
                 <button class="active" data-bus="hiace">
                     <span class="bus-name">Hiace</span>
@@ -36,7 +32,13 @@
         </header>
 
         <main>
-            <div class="layout-wrapper">
+            <div id="capture-area" class="capture-area">
+                <div class="trip-header">
+                    <h1>숲길따라 감성여행</h1>
+                    <h2 id="trip-name" contenteditable="true" data-placeholder="여행 이름 입력 (예: 0827-0829 군산 버스 좌석표)">0827-0829 군산 버스 좌석표</h2>
+                </div>
+
+                <div class="layout-wrapper">
                 <div class="bus-front-indicator">FRONT</div>
                 <div id="bus-view" class="bus-container">
                     <!-- Bus layout will be injected here via JS -->
@@ -60,6 +62,7 @@
                     <div class="seat-shape door"></div>
                     <span>출입문</span>
                 </div>
+            </div>
             </div>
             
             <div class="action-buttons">

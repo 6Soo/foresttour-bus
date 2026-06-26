@@ -118,15 +118,18 @@ shareBtn.addEventListener('click', async () => {
         shareBtn.innerHTML = '캡처 중... ⏳';
         shareBtn.disabled = true;
 
-        const layoutWrapper = document.querySelector('.layout-wrapper');
+        const captureArea = document.getElementById('capture-area');
+        captureArea.classList.add('capturing');
         
         // Use html2canvas to capture the element
-        const canvas = await html2canvas(layoutWrapper, {
+        const canvas = await html2canvas(captureArea, {
             backgroundColor: '#0f172a', // Match the dark theme background
             scale: 2, // High resolution for mobile
             logging: false,
             useCORS: true
         });
+        
+        captureArea.classList.remove('capturing');
         
         canvas.toBlob(async (blob) => {
             const file = new File([blob], 'bus-seating-chart.png', { type: 'image/png' });

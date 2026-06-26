@@ -56,18 +56,60 @@ header {
     text-align: center;
 }
 
-.header-content h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(to right, #60a5fa, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.capture-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: transparent;
+    transition: background 0.3s;
+}
+
+.capture-area.capturing {
+    background: var(--bg-primary); /* Ensures dark background during html2canvas */
+}
+
+.trip-header {
+    text-align: center;
+    width: 100%;
     margin-bottom: 0.5rem;
 }
 
-.header-content p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
+.trip-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #4ade80, #3b82f6); /* Forest vibe */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+#trip-name {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    outline: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    min-width: 250px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#trip-name:hover, #trip-name:focus {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#trip-name:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
 }
 
 .bus-selector {
@@ -121,7 +163,10 @@ main {
 
 .layout-wrapper {
     position: relative;
-    padding-top: 2rem;
+    padding-top: 1.5rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 .bus-front-indicator {
