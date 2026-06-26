@@ -3,50 +3,50 @@ const layouts = {
         cols: 3,
         seats: [
             // Row 0: Passenger(L), Console, Driver(R)
-            { type: 'available', label: '1' }, { type: 'empty' }, { type: 'driver', label: 'D' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1: Door(L), Seat, Seat
-            { type: 'door', label: 'Door' }, { type: 'available', label: '2' }, { type: 'available', label: '3' },
+            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2-4: 3 seats each
-            { type: 'available', label: '4' }, { type: 'available', label: '5' }, { type: 'available', label: '6' },
-            { type: 'available', label: '7' }, { type: 'available', label: '8' }, { type: 'available', label: '9' },
-            { type: 'available', label: '10' }, { type: 'available', label: '11' }, { type: 'available', label: '12' },
-            { type: 'available', label: '13' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
         ]
     },
     grandcabin: {
         cols: 4,
         seats: [
             // Row 0: Passenger(L), Empty, Empty, Driver(R)
-            { type: 'available', label: '1' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: 'D' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1: Door(L), Empty, Seat, Seat
-            { type: 'door', label: 'Door' }, { type: 'empty' }, { type: 'available', label: '2' }, { type: 'available', label: '3' },
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Empty, Empty, Seat, Seat
-            { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '4' }, { type: 'available', label: '5' },
+            { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 3: 4 seats across the back
-            { type: 'available', label: '6' }, { type: 'available', label: '7' }, { type: 'available', label: '8' }, { type: 'available', label: '9' }
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
     japan24: {
         cols: 4,
         seats: [
             // Row 0: Guide/Door(L), Empty, Empty, Driver(R)
-            { type: 'guide', label: 'G' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: 'D' },
+            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1-7: 1 seat(L), aisle, 2 seats(R)
-            { type: 'available', label: '1' }, { type: 'empty' }, { type: 'available', label: '2' }, { type: 'available', label: '3' },
-            { type: 'available', label: '4' }, { type: 'empty' }, { type: 'available', label: '5' }, { type: 'available', label: '6' },
-            { type: 'available', label: '7' }, { type: 'empty' }, { type: 'available', label: '8' }, { type: 'available', label: '9' },
-            { type: 'available', label: '10' }, { type: 'empty' }, { type: 'available', label: '11' }, { type: 'available', label: '12' },
-            { type: 'available', label: '13' }, { type: 'empty' }, { type: 'available', label: '14' }, { type: 'available', label: '15' },
-            { type: 'available', label: '16' }, { type: 'empty' }, { type: 'available', label: '17' }, { type: 'available', label: '18' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 8: 4 seats across
-            { type: 'available', label: '19' }, { type: 'available', label: '20' }, { type: 'available', label: '21' }, { type: 'available', label: '22' }
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
     korea40: {
         cols: 5,
         seats: [
             // Row 0: Driver(L), Empty, Empty, Empty, Door(R)
-            { type: 'driver', label: 'D' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'door', label: 'Door' }
+            { type: 'driver', label: '운전석' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'door', label: '출입문' }
         ]
     }
 };
@@ -54,11 +54,11 @@ const layouts = {
 // Generate 40 passenger seats for Korea bus
 for (let i = 1; i <= 40; i += 4) {
     layouts.korea40.seats.push(
-        { type: 'available', label: i },
-        { type: 'available', label: i + 1 },
+        { type: 'available', label: '' },
+        { type: 'available', label: '' },
         { type: 'empty' }, // Aisle
-        { type: 'available', label: i + 2 },
-        { type: 'available', label: i + 3 }
+        { type: 'available', label: '' },
+        { type: 'available', label: '' }
     );
 }
 
@@ -81,6 +81,11 @@ function renderBus(busId) {
         
         if (seat.label) {
             seatDiv.textContent = seat.label;
+        }
+        
+        if (seat.type === 'available') {
+            seatDiv.contentEditable = true;
+            seatDiv.setAttribute('data-placeholder', '이름');
         }
         
         busContainer.appendChild(seatDiv);

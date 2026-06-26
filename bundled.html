@@ -1,0 +1,547 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="프리미엄 여행사 버스 좌석 배치도">
+    <title>프리미엄 버스 좌석표 | 여행사</title>
+    <style>
+:root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-color: #3b82f6;
+    --accent-hover: #60a5fa;
+    --seat-available: linear-gradient(135deg, #3b82f6, #2563eb);
+    --seat-driver: linear-gradient(135deg, #475569, #334155);
+    --seat-guide: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    --seat-door: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Pretendard', sans-serif;
+}
+
+body {
+    background: var(--bg-primary);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 1000px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    text-align: center;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.header-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.bus-selector {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.bus-selector button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bus-selector button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.bus-selector button.active {
+    background: var(--accent-color);
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.bus-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.bus-capacity {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.layout-wrapper {
+    position: relative;
+    padding-top: 2rem;
+}
+
+.bus-front-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 1rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+}
+
+.bus-container {
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--glass-border);
+    border-radius: 40px 40px 20px 20px;
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease-in-out;
+}
+
+/* Dynamic columns applied via JS inline style, but gap/padding is here */
+
+.seat {
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 65px;
+    min-height: 50px;
+    padding: 0.25rem;
+    text-align: center;
+    word-break: keep-all;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seat.available {
+    background: var(--seat-available);
+    cursor: text;
+    outline: none;
+}
+
+.seat.available:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.seat.available:focus {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-hover);
+    transform: scale(1.05);
+}
+
+.seat.available:hover:not(:focus) {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+}
+
+.seat.driver {
+    background: var(--seat-driver);
+    color: #fff;
+}
+
+.seat.guide {
+    background: var(--seat-guide);
+    color: #fff;
+}
+
+.seat.door {
+    background: var(--seat-door);
+    border: 1px dashed var(--text-secondary);
+    box-shadow: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.seat.empty {
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.legend {
+    display: flex;
+    gap: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem 2rem;
+    border-radius: 100px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.seat-shape {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.seat {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.share-button {
+    background: linear-gradient(135deg, #fceb00, #ffd900);
+    color: #381e1f;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(252, 235, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.share-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(252, 235, 0, 0.6);
+}
+
+.share-button svg {
+    stroke: #381e1f;
+}
+
+/* Responsiveness */
+@media (max-width: 600px) {
+    .app-container {
+        padding: 1.5rem;
+    }
+    
+    .bus-container {
+        padding: 1.5rem 1rem 1rem 1rem;
+    }
+
+    .seat {
+        min-width: 50px;
+        min-height: 40px;
+        font-size: 0.9rem;
+    }
+}
+
+</style>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1>Premium Fleet Layouts</h1>
+                <p>여행사를 위한 프리미엄 버스 좌석 배치도</p>
+            </div>
+            <nav class="bus-selector">
+                <button class="active" data-bus="hiace">
+                    <span class="bus-name">Hiace</span>
+                    <span class="bus-capacity">14인승</span>
+                </button>
+                <button data-bus="grandcabin">
+                    <span class="bus-name">Grand Cabin</span>
+                    <span class="bus-capacity">10인승</span>
+                </button>
+                <button data-bus="japan24">
+                    <span class="bus-name">일본형 소형</span>
+                    <span class="bus-capacity">24인승</span>
+                </button>
+                <button data-bus="korea40">
+                    <span class="bus-name">한국형 대형</span>
+                    <span class="bus-capacity">40인승</span>
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <div class="layout-wrapper">
+                <div class="bus-front-indicator">FRONT</div>
+                <div id="bus-view" class="bus-container">
+                    <!-- Bus layout will be injected here via JS -->
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="seat-shape available"></div>
+                    <span>일반 좌석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape driver"></div>
+                    <span>운전석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape guide"></div>
+                    <span>가이드석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape door"></div>
+                    <span>출입문</span>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="share-btn" class="share-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    이미지 캡처 및 카카오톡 공유
+                </button>
+            </div>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+const layouts = {
+    hiace: {
+        cols: 3,
+        seats: [
+            // Row 0: Passenger(L), Console, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2-4: 3 seats each
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
+        ]
+    },
+    grandcabin: {
+        cols: 4,
+        seats: [
+            // Row 0: Passenger(L), Empty, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Empty, Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2: Empty, Empty, Seat, Seat
+            { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 3: 4 seats across the back
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
+        ]
+    },
+    japan24: {
+        cols: 4,
+        seats: [
+            // Row 0: Guide/Door(L), Empty, Empty, Driver(R)
+            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1-7: 1 seat(L), aisle, 2 seats(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 8: 4 seats across
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
+        ]
+    },
+    korea40: {
+        cols: 5,
+        seats: [
+            // Row 0: Driver(L), Empty, Empty, Empty, Door(R)
+            { type: 'driver', label: '운전석' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'door', label: '출입문' }
+        ]
+    }
+};
+
+// Generate 40 passenger seats for Korea bus
+for (let i = 1; i <= 40; i += 4) {
+    layouts.korea40.seats.push(
+        { type: 'available', label: '' },
+        { type: 'available', label: '' },
+        { type: 'empty' }, // Aisle
+        { type: 'available', label: '' },
+        { type: 'available', label: '' }
+    );
+}
+
+const busContainer = document.getElementById('bus-view');
+const buttons = document.querySelectorAll('.bus-selector button');
+
+function renderBus(busId) {
+    const layout = layouts[busId];
+    busContainer.innerHTML = '';
+    
+    // Set grid columns dynamically
+    busContainer.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
+    
+    layout.seats.forEach((seat, index) => {
+        const seatDiv = document.createElement('div');
+        seatDiv.className = `seat ${seat.type}`;
+        
+        // Add animation delay for a cool cascade effect
+        seatDiv.style.animationDelay = `${index * 0.02}s`;
+        
+        if (seat.label) {
+            seatDiv.textContent = seat.label;
+        }
+        
+        if (seat.type === 'available') {
+            seatDiv.contentEditable = true;
+            seatDiv.setAttribute('data-placeholder', '이름');
+        }
+        
+        busContainer.appendChild(seatDiv);
+    });
+}
+
+// Event Listeners for buttons
+buttons.forEach(button => {
+    button.addEventListener('click', (e) => {
+        // Remove active class from all
+        buttons.forEach(btn => btn.classList.remove('active'));
+        // Add to clicked
+        const targetBtn = e.currentTarget;
+        targetBtn.classList.add('active');
+        
+        // Render corresponding bus
+        renderBus(targetBtn.dataset.bus);
+    });
+});
+
+// Initial render
+renderBus('hiace');
+
+// Share & Screenshot functionality
+const shareBtn = document.getElementById('share-btn');
+shareBtn.addEventListener('click', async () => {
+    try {
+        // Change button text to show progress
+        const originalText = shareBtn.innerHTML;
+        shareBtn.innerHTML = '캡처 중... ⏳';
+        shareBtn.disabled = true;
+
+        const layoutWrapper = document.querySelector('.layout-wrapper');
+        
+        // Use html2canvas to capture the element
+        const canvas = await html2canvas(layoutWrapper, {
+            backgroundColor: '#0f172a', // Match the dark theme background
+            scale: 2, // High resolution for mobile
+            logging: false,
+            useCORS: true
+        });
+        
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'bus-seating-chart.png', { type: 'image/png' });
+            
+            // Check if Web Share API with files is supported (mostly mobile browsers like Safari iOS, Chrome Android)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: '프리미엄 버스 좌석표',
+                        text: '여행사 버스 좌석 배치도입니다. 확인 부탁드립니다.',
+                        files: [file]
+                    });
+                    console.log('Shared successfully');
+                } catch (error) {
+                    console.error('Sharing failed or was cancelled:', error);
+                    // If user cancelled, don't download it automatically to avoid annoyance
+                }
+            } else {
+                // Fallback for Desktop or unsupported browsers: Download the image
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'bus-seating-chart.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('이미지가 기기에 저장되었습니다. 카카오톡 PC버전이나 메신저를 통해 이미지를 전송해주세요!');
+            }
+            
+            // Restore button state
+            shareBtn.innerHTML = originalText;
+            shareBtn.disabled = false;
+        });
+    } catch (err) {
+        console.error('Error generating image:', err);
+        alert('이미지 생성 중 오류가 발생했습니다.');
+        shareBtn.disabled = false;
+    }
+});
+
+</script>
+</body>
+</html>
+
