@@ -328,3 +328,20 @@ main {
         font-size: 0.75rem;
     }
 }
+
+/* html2canvas capture fixes */
+.capturing .trip-header h1 {
+    background: transparent !important;
+    -webkit-text-fill-color: #4ade80 !important;
+    color: #4ade80 !important;
+    text-shadow: none !important;
+}
+
+.capturing .bus-container {
+    box-shadow: none !important;
+    border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.capturing .seat {
+    box-shadow: none !important;
+}
