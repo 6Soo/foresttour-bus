@@ -209,6 +209,9 @@ main {
     padding: 0.25rem;
     text-align: center;
     word-break: keep-all;
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: -0.5px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -293,16 +296,35 @@ main {
 /* Responsiveness */
 @media (max-width: 600px) {
     .app-container {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     
     .bus-container {
-        padding: 1.5rem 1rem 1rem 1rem;
+        padding: 1.5rem 0.5rem 0.5rem 0.5rem;
+        gap: 0.4rem;
+        border-radius: 30px 30px 15px 15px;
     }
 
     .seat {
-        min-width: 50px;
-        min-height: 40px;
+        min-width: 45px;
+        min-height: 45px;
+        font-size: 0.85rem;
+        padding: 0.1rem;
+    }
+
+    .bus-selector button {
+        padding: 0.5rem 0.8rem;
+    }
+    
+    .bus-name {
         font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .seat {
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 0.75rem;
     }
 }
