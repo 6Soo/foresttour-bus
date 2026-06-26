@@ -78,15 +78,17 @@ header {
 }
 
 .trip-header h1 {
-    
+    font-size: clamp(1.35rem, 6.5vw, 2.6rem);
     font-weight: 800;
-    background: linear-gradient(to right, #4ade80, #3b82f6); /* Forest vibe */
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(to right, #4ade80, #3b82f6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
     text-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
     white-space: nowrap;
-    font-size: clamp(1.35rem, 6.5vw, 2.6rem);
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
 }
 
 #trip-name {
