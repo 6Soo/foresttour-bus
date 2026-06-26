@@ -1,6 +1,6 @@
 const layouts = {
     hiace: {
-        cols: 3,
+        cols: 4,
         seats: [
             // Row 0: Passenger(L), Empty, Empty, Driver(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
