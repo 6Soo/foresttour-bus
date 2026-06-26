@@ -106,22 +106,24 @@ function renderBus(busId) {
     });
 }
 
-// Event Listeners for buttons
-buttons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        // Remove active class from all
-        buttons.forEach(btn => btn.classList.remove('active'));
-        // Add to clicked
-        const targetBtn = e.currentTarget;
+let currentLayout = 'hiace10';
+
+// Event Listeners
+document.querySelectorAll('.bus-selector button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // Update active state
+        document.querySelectorAll('.bus-selector button').forEach(b => b.classList.remove('active'));
+        const targetBtn = e.target.closest('button');
         targetBtn.classList.add('active');
         
-        // Render corresponding bus
-        renderBus(targetBtn.dataset.bus);
+        // Update layout
+        currentLayout = targetBtn.dataset.bus;
+        renderBus(currentLayout);
     });
 });
 
 // Initial render
-renderBus('hiace');
+renderBus('hiace10');
 
 // Share & Screenshot functionality
 const shareBtn = document.getElementById('share-btn');

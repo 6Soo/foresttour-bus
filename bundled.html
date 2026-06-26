@@ -344,17 +344,17 @@ main {
     <div class="app-container">
         <header>
             <nav class="bus-selector">
-                <button class="active" data-bus="hiace">
-                    <span class="bus-name">Hiace</span>
-                    <span class="bus-capacity">14인승</span>
-                </button>
-                <button data-bus="hiace10">
+                <button class="active" data-bus="hiace10">
                     <span class="bus-name">Hiace</span>
                     <span class="bus-capacity">10인승</span>
                 </button>
                 <button data-bus="grandcabin">
                     <span class="bus-name">Grand Cabin</span>
                     <span class="bus-capacity">10인승</span>
+                </button>
+                <button data-bus="hiace">
+                    <span class="bus-name">Hiace</span>
+                    <span class="bus-capacity">14인승</span>
                 </button>
                 <button data-bus="japan24">
                     <span class="bus-name">일본형 소형</span>
@@ -516,22 +516,24 @@ function renderBus(busId) {
     });
 }
 
-// Event Listeners for buttons
-buttons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        // Remove active class from all
-        buttons.forEach(btn => btn.classList.remove('active'));
-        // Add to clicked
-        const targetBtn = e.currentTarget;
+let currentLayout = 'hiace10';
+
+// Event Listeners
+document.querySelectorAll('.bus-selector button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // Update active state
+        document.querySelectorAll('.bus-selector button').forEach(b => b.classList.remove('active'));
+        const targetBtn = e.target.closest('button');
         targetBtn.classList.add('active');
         
-        // Render corresponding bus
-        renderBus(targetBtn.dataset.bus);
+        // Update layout
+        currentLayout = targetBtn.dataset.bus;
+        renderBus(currentLayout);
     });
 });
 
 // Initial render
-renderBus('hiace');
+renderBus('hiace10');
 
 // Share & Screenshot functionality
 const shareBtn = document.getElementById('share-btn');
