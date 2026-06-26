@@ -226,13 +226,6 @@ main {
     outline: none;
 }
 
-.seat.available:empty::before {
-    content: attr(data-placeholder);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.8rem;
-    pointer-events: none;
-}
-
 .seat.available:focus {
     box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-hover);
     transform: scale(1.05);
@@ -506,7 +499,6 @@ function renderBus(busId) {
         
         if (seat.type === 'available') {
             seatDiv.contentEditable = true;
-            seatDiv.setAttribute('data-placeholder', '이름');
         }
         
         busContainer.appendChild(seatDiv);

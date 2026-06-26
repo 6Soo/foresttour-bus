@@ -85,7 +85,6 @@ function renderBus(busId) {
         
         if (seat.type === 'available') {
             seatDiv.contentEditable = true;
-            seatDiv.setAttribute('data-placeholder', '이름');
         }
         
         busContainer.appendChild(seatDiv);
