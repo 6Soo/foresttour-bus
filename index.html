@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="프리미엄 여행사 버스 좌석 배치도">
+    <title>프리미엄 버스 좌석표 | 여행사</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1>Premium Fleet Layouts</h1>
+                <p>여행사를 위한 프리미엄 버스 좌석 배치도</p>
+            </div>
+            <nav class="bus-selector">
+                <button class="active" data-bus="hiace">
+                    <span class="bus-name">Hiace</span>
+                    <span class="bus-capacity">14인승</span>
+                </button>
+                <button data-bus="grandcabin">
+                    <span class="bus-name">Grand Cabin</span>
+                    <span class="bus-capacity">10인승</span>
+                </button>
+                <button data-bus="japan24">
+                    <span class="bus-name">일본형 소형</span>
+                    <span class="bus-capacity">24인승</span>
+                </button>
+                <button data-bus="korea40">
+                    <span class="bus-name">한국형 대형</span>
+                    <span class="bus-capacity">40인승</span>
+                </button>
+            </nav>
+        </header>
+
+        <main>
+            <div class="layout-wrapper">
+                <div class="bus-front-indicator">FRONT</div>
+                <div id="bus-view" class="bus-container">
+                    <!-- Bus layout will be injected here via JS -->
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="seat-shape available"></div>
+                    <span>일반 좌석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape driver"></div>
+                    <span>운전석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape guide"></div>
+                    <span>가이드석</span>
+                </div>
+                <div class="legend-item">
+                    <div class="seat-shape door"></div>
+                    <span>출입문</span>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

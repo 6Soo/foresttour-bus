@@ -1,0 +1,250 @@
+:root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-color: #3b82f6;
+    --accent-hover: #60a5fa;
+    --seat-available: linear-gradient(135deg, #3b82f6, #2563eb);
+    --seat-driver: linear-gradient(135deg, #475569, #334155);
+    --seat-guide: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    --seat-door: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Pretendard', sans-serif;
+}
+
+body {
+    background: var(--bg-primary);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 1000px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    text-align: center;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.header-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.bus-selector {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.bus-selector button {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bus-selector button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.bus-selector button.active {
+    background: var(--accent-color);
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.bus-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.bus-capacity {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.layout-wrapper {
+    position: relative;
+    padding-top: 2rem;
+}
+
+.bus-front-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 1rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+}
+
+.bus-container {
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--glass-border);
+    border-radius: 40px 40px 20px 20px;
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease-in-out;
+}
+
+/* Dynamic columns applied via JS inline style, but gap/padding is here */
+
+.seat {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 45px;
+    min-height: 45px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seat.available {
+    background: var(--seat-available);
+    cursor: pointer;
+}
+
+.seat.available:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+}
+
+.seat.driver {
+    background: var(--seat-driver);
+    color: #fff;
+}
+
+.seat.guide {
+    background: var(--seat-guide);
+    color: #fff;
+}
+
+.seat.door {
+    background: var(--seat-door);
+    border: 1px dashed var(--text-secondary);
+    box-shadow: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.seat.empty {
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.legend {
+    display: flex;
+    gap: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem 2rem;
+    border-radius: 100px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.seat-shape {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.seat {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Responsiveness */
+@media (max-width: 600px) {
+    .app-container {
+        padding: 1.5rem;
+    }
+    
+    .bus-container {
+        padding: 1.5rem 1rem 1rem 1rem;
+    }
+
+    .seat {
+        min-width: 35px;
+        min-height: 35px;
+        font-size: 0.8rem;
+    }
+}
