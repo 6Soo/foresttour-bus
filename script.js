@@ -132,6 +132,13 @@ function renderBus(busId) {
         seatDiv.addEventListener('contextmenu', removeSeat);
         seatDiv.addEventListener('dblclick', removeSeat);
         
+        // Prevent rich text paste formatting
+        seatDiv.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+        
         busContainer.appendChild(seatDiv);
     });
 }
