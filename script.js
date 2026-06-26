@@ -2,30 +2,29 @@ const layouts = {
     hiace: {
         cols: 3,
         seats: [
-            // Row 0: Passenger(L), Console, Driver(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Door(L), Seat, Seat
-            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 2-4: 3 seats each
-            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' } // Adjusting to 13 passengers to fit standard
+            // Row 0: Passenger(L), Empty, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Empty, Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2: Seat, Empty, Seat, Seat
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 3: Seat, Empty, Seat, Seat
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 4: Seat, Seat, Seat, Seat
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
     hiace10: {
-        cols: 3,
+        cols: 4,
         seats: [
-            // Row 0: Passenger(L), Console, Driver(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Door(L), Seat, Seat
-            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 2: Empty, Seat, Seat
-            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3: Empty, Seat, Seat
-            { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 4: Seat, Seat, Seat
-            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
+            // Row 0: Passenger(L), Empty, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Empty, Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2: Empty, Empty, Seat, Seat
+            { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 3: Seat, Seat, Seat, Seat
+            { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
     grandcabin: {
@@ -37,23 +36,23 @@ const layouts = {
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Empty, Empty, Seat, Seat
             { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3: 4 seats across the back
+            // Row 3: Seat, Seat, Seat, Seat
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Door(L), Empty, Empty, Driver(R)
-            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1-7: 1 seat(L), aisle, 2 seats(R)
+            // Row 0: Door(L), Passenger, Empty, Driver(R)
+            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1-6: 1 seat(L), aisle, 2 seats(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 8: 4 seats across
+            // Row 7: 4 seats across
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
