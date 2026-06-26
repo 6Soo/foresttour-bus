@@ -43,10 +43,11 @@ const layouts = {
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Door(L), Passenger, Empty, Driver(R)
-            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1-6: 1 seat(L), aisle, 2 seats(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 0: Seat 1, Refrigerator, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Empty, Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2-6: 1 seat(L), aisle, 2 seats(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
@@ -100,6 +101,30 @@ function renderBus(busId) {
         if (seat.type === 'available') {
             seatDiv.contentEditable = true;
         }
+        
+        // Allow adding seats by clicking empty spaces
+        seatDiv.addEventListener('click', function(e) {
+            if (this.classList.contains('empty')) {
+                this.classList.remove('empty');
+                this.classList.add('available');
+                this.contentEditable = true;
+                this.focus();
+            }
+        });
+
+        // Allow removing seats by right-clicking or double-clicking empty seats
+        const removeSeat = function(e) {
+            if (this.classList.contains('available') && this.textContent.trim() === '') {
+                e.preventDefault(); // Prevent context menu
+                this.classList.remove('available');
+                this.classList.add('empty');
+                this.contentEditable = false;
+                this.textContent = '';
+                this.blur();
+            }
+        };
+        seatDiv.addEventListener('contextmenu', removeSeat);
+        seatDiv.addEventListener('dblclick', removeSeat);
         
         busContainer.appendChild(seatDiv);
     });

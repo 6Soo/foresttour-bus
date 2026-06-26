@@ -86,14 +86,14 @@ header {
 }
 
 .trip-header h1 {
-    font-size: 2.5rem;
+    
     font-weight: 800;
     background: linear-gradient(to right, #4ade80, #3b82f6); /* Forest vibe */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
     text-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
-}
+`n    white-space: nowrap;`n    font-size: clamp(1.2rem, 6vw, 2.5rem);`n}
 
 #trip-name {
     font-size: 1.2rem;
@@ -255,7 +255,19 @@ main {
 .seat.empty {
     background: transparent;
     box-shadow: none;
-    pointer-events: none;
+    cursor: pointer;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+}
+.seat.empty:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+.seat.refrigerator {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 
@@ -343,7 +355,7 @@ main {
     -webkit-text-fill-color: #4ade80 !important;
     color: #4ade80 !important;
     text-shadow: none !important;
-}
+`n    white-space: nowrap;`n    font-size: clamp(1.2rem, 6vw, 2.5rem);`n}
 
 .capturing .bus-container {
     box-shadow: none !important;
@@ -353,6 +365,7 @@ main {
 .capturing .seat {
     box-shadow: none !important;
 }
+
 
 </style>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -450,10 +463,11 @@ const layouts = {
     japan24: {
         cols: 4,
         seats: [
-            // Row 0: Door(L), Passenger, Empty, Driver(R)
-            { type: 'door', label: '출입문' }, { type: 'available', label: '' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1-6: 1 seat(L), aisle, 2 seats(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 0: Seat 1, Refrigerator, Empty, Driver(R)
+            { type: 'available', label: '' }, { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            // Row 1: Door(L), Empty, Seat, Seat
+            { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 2-6: 1 seat(L), aisle, 2 seats(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
@@ -507,6 +521,30 @@ function renderBus(busId) {
         if (seat.type === 'available') {
             seatDiv.contentEditable = true;
         }
+        
+        // Allow adding seats by clicking empty spaces
+        seatDiv.addEventListener('click', function(e) {
+            if (this.classList.contains('empty')) {
+                this.classList.remove('empty');
+                this.classList.add('available');
+                this.contentEditable = true;
+                this.focus();
+            }
+        });
+
+        // Allow removing seats by right-clicking or double-clicking empty seats
+        const removeSeat = function(e) {
+            if (this.classList.contains('available') && this.textContent.trim() === '') {
+                e.preventDefault(); // Prevent context menu
+                this.classList.remove('available');
+                this.classList.add('empty');
+                this.contentEditable = false;
+                this.textContent = '';
+                this.blur();
+            }
+        };
+        seatDiv.addEventListener('contextmenu', removeSeat);
+        seatDiv.addEventListener('dblclick', removeSeat);
         
         busContainer.appendChild(seatDiv);
     });
