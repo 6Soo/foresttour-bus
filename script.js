@@ -8,12 +8,13 @@ const layouts = {
             { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3-6: 1 seat(L), aisle jump seat, 2 seats(R) (Total 4 per row)
+            // Row 3-7: 1 seat(L), aisle jump seat, 2 seats(R) (Total 4 per row * 5 rows)
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 7: 4 seats across
+            { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 8: 4 seats across
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
@@ -52,12 +53,13 @@ const layouts = {
             { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3-6: 1 seat(L), aisle, 2 seats(R)
+            // Row 3-7: 1 seat(L), aisle, 2 seats(R) (Total 3 per row * 5 rows)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 7: 4 seats across
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            // Row 8: 4 seats across
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
     },
