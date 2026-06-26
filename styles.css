@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --text-primary: #f8fafc;
@@ -85,7 +85,9 @@ header {
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
     text-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
-`n    white-space: nowrap;`n    font-size: clamp(1.2rem, 6vw, 2.5rem);`n}
+    white-space: nowrap;
+    font-size: clamp(1.2rem, 6vw, 2.5rem);
+}
 
 #trip-name {
     font-size: 1.2rem;
