@@ -4,8 +4,8 @@ const layouts = {
         seats: [
             // Row 0: Guide(L), Empty, Empty, Driver(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Refrigerator(L), Empty, Empty, Passenger Seat(R)
-            { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' },
+            // Row 1: Refrigerator(L), Empty, 2 Seats(R)
+            { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 3-7: 1 seat(L), aisle jump seat, 2 seats(R) (Total 4 per row * 5 rows)
@@ -49,8 +49,8 @@ const layouts = {
         seats: [
             // Row 0: Guide(L), Empty, Empty, Driver(R)
             { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
-            // Row 1: Refrigerator(L), Empty, Empty, Passenger Seat(R)
-            { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'empty' }, { type: 'available', label: '' },
+            // Row 1: Refrigerator(L), Empty, 2 Seats(R)
+            { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 3-7: 1 seat(L), aisle, 2 seats(R) (Total 3 per row * 5 rows)
