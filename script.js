@@ -103,3 +103,62 @@ buttons.forEach(button => {
 
 // Initial render
 renderBus('hiace');
+
+// Share & Screenshot functionality
+const shareBtn = document.getElementById('share-btn');
+shareBtn.addEventListener('click', async () => {
+    try {
+        // Change button text to show progress
+        const originalText = shareBtn.innerHTML;
+        shareBtn.innerHTML = '캡처 중... ⏳';
+        shareBtn.disabled = true;
+
+        const layoutWrapper = document.querySelector('.layout-wrapper');
+        
+        // Use html2canvas to capture the element
+        const canvas = await html2canvas(layoutWrapper, {
+            backgroundColor: '#0f172a', // Match the dark theme background
+            scale: 2, // High resolution for mobile
+            logging: false,
+            useCORS: true
+        });
+        
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'bus-seating-chart.png', { type: 'image/png' });
+            
+            // Check if Web Share API with files is supported (mostly mobile browsers like Safari iOS, Chrome Android)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: '프리미엄 버스 좌석표',
+                        text: '여행사 버스 좌석 배치도입니다. 확인 부탁드립니다.',
+                        files: [file]
+                    });
+                    console.log('Shared successfully');
+                } catch (error) {
+                    console.error('Sharing failed or was cancelled:', error);
+                    // If user cancelled, don't download it automatically to avoid annoyance
+                }
+            } else {
+                // Fallback for Desktop or unsupported browsers: Download the image
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'bus-seating-chart.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('이미지가 기기에 저장되었습니다. 카카오톡 PC버전이나 메신저를 통해 이미지를 전송해주세요!');
+            }
+            
+            // Restore button state
+            shareBtn.innerHTML = originalText;
+            shareBtn.disabled = false;
+        });
+    } catch (err) {
+        console.error('Error generating image:', err);
+        alert('이미지 생성 중 오류가 발생했습니다.');
+        shareBtn.disabled = false;
+    }
+});

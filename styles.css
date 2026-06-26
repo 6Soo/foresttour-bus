@@ -232,6 +232,38 @@ main {
     animation: fadeIn 0.4s ease-out forwards;
 }
 
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.share-button {
+    background: linear-gradient(135deg, #fceb00, #ffd900);
+    color: #381e1f;
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(252, 235, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.share-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(252, 235, 0, 0.6);
+}
+
+.share-button svg {
+    stroke: #381e1f;
+}
+
 /* Responsiveness */
 @media (max-width: 600px) {
     .app-container {
