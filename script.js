@@ -3,17 +3,17 @@ const layouts = {
         cols: 4,
         seats: [
             // Row 0: Guide(L), Empty, Empty, Driver(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1: Refrigerator(L), Empty, 2 Seats(R)
             { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
             { type: 'door', label: '출입문' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            // Row 3-7: 1 seat(L), aisle jump seat, 2 seats(R) (Total 4 per row * 5 rows)
+            // Row 3-7: 1 seat(L), aisle jump seat, 2 seats(R) — 4 rows with jump + 1 row without = 4*4 + 3 = 19 seats
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
-            { type: 'available', label: '' }, { type: 'jump', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' },
+            { type: 'available', label: '' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 8: 4 seats across
             { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }, { type: 'available', label: '' }
         ]
@@ -48,7 +48,7 @@ const layouts = {
         cols: 4,
         seats: [
             // Row 0: Guide(L), Empty, Empty, Driver(R)
-            { type: 'available', label: '' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
+            { type: 'guide', label: '가이드' }, { type: 'empty' }, { type: 'empty' }, { type: 'driver', label: '운전석' },
             // Row 1: Refrigerator(L), Empty, 2 Seats(R)
             { type: 'refrigerator', label: '냉장고' }, { type: 'empty' }, { type: 'available', label: '' }, { type: 'available', label: '' },
             // Row 2: Door(L), Empty, Seat, Seat
@@ -104,7 +104,7 @@ function renderBus(busId) {
             seatDiv.textContent = seat.label;
         }
         
-        if (seat.type === 'available' || seat.type === 'jump') {
+        if (seat.type === 'available' || seat.type === 'jump' || seat.type === 'guide') {
             seatDiv.contentEditable = true;
         }
         

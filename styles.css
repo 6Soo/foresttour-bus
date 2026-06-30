@@ -261,6 +261,23 @@ main {
     font-size: 0.8rem;
 }
 
+.seat.guide {
+    background: var(--seat-guide);
+    color: #fff;
+    cursor: text;
+    outline: none;
+}
+
+.seat.guide:focus {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px #8b5cf6;
+    transform: scale(1.05);
+}
+
+.seat.guide:hover:not(:focus) {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
+}
+
 .seat.empty {
     background: transparent;
     box-shadow: none;
@@ -364,7 +381,9 @@ main {
     -webkit-text-fill-color: #4ade80 !important;
     color: #4ade80 !important;
     text-shadow: none !important;
-`n    white-space: nowrap;`n    font-size: clamp(1.2rem, 6vw, 2.5rem);`n}
+    white-space: nowrap;
+    font-size: clamp(1.2rem, 6vw, 2.5rem);
+}
 
 .capturing .bus-container {
     box-shadow: none !important;
@@ -383,4 +402,9 @@ main {
 .capturing .seat.jump {
     background: rgba(59, 130, 246, 0.15) !important;
     color: var(--seat-available) !important;
+}
+
+.capturing .seat.guide {
+    background: var(--seat-guide) !important;
+    color: #ffffff !important;
 }
