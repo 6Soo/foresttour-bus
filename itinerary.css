@@ -508,6 +508,11 @@ body.editing .note-body {
     margin-top: 28px;
 }
 
+/* 이미지 캡처 중: 하단 버튼용 여백 제거 */
+main.capturing {
+    padding-bottom: 24px;
+}
+
 /* ---------- 하단 액션 바 ---------- */
 .action-bar {
     position: fixed;
