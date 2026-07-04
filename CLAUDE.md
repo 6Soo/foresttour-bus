@@ -52,6 +52,17 @@ import 미리보기에서 사용자가 분류를 고치면 `localStorage('forest
   로 호출하면 쓰레기 토큰 필터 적용. 짝 없는 `[` 가 생겨도 숙박류 대괄호만 최대 3줄 병합.
   직접 붙여넣은 텍스트는 `{ocr:false}`(기본)로 필터 없이 보존할 것.
 
+## 배포 체크리스트
+
+1. **JS/CSS를 수정하면 반드시 세 HTML의 자산 버전 쿼리(`?v=YYYYMMDD*`)를 함께 올릴 것.**
+   GitHub Pages(+모바일 브라우저) 캐시 때문에 버전을 안 올리면 사용자에게 옛 코드가 실행된다
+   (실제로 수정 배포 후에도 사용자 휴대폰에서 옛 버그가 재현된 사고 있음).
+2. 파서 수정 시 node 단위 테스트(위 명령) + **실제 이미지 파일로 E2E 테스트**를 할 것:
+   Playwright에서 `page.route('https://cdn.jsdelivr.net/**')`로 CDN을 로컬 npm 파일
+   (`tesseract.js`, `tesseract.js-core`, `@tesseract.js-data/kor|eng`)로 라우팅하면
+   이 환경에서도 업로드→OCR→미리보기 전체 흐름이 돌아간다. 텍스트 주입 테스트만으로 끝내지 말 것.
+3. main 병합 후 Pages 배포가 `success`인지 확인 (일시 오류로 `failure`가 나면 재트리거 필요).
+
 ## 주의
 
 - `tesseract.js` 및 한글 traineddata는 jsdelivr CDN에서 로드됨 — 이 개발 환경에서는 프록시가
