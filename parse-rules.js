@@ -151,6 +151,9 @@ function cleanNoise(text, minRatio = 0.5) {
     return String(text || '')
         .split(/\s+/)
         .filter((tok) => {
+            // 완성형 한글 1~2자 토큰(반, 그, 후, 성 등)은 실제 단어일 가능성이 높으므로 보존
+            // (자모 ㅅ·ㅣ 등 OCR 잔여물은 완성형이 아니라서 여기 해당 없음)
+            if (/^[가-힣]{1,2}$/.test(tok)) return true;
             const m = meaningfulCount(tok);
             if (m < 1) return false;
             if (tok.length <= 2 && m < 2) return false;
