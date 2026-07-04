@@ -132,9 +132,8 @@ function renderHero() {
     document.getElementById('trip-dates').textContent = tripDatesLabel() || '날짜 미정';
     document.getElementById('start-date').value = state.startDate || '';
 
-    const itemCount = state.days.reduce((n, d) => n + d.items.length, 0);
     const stayCount = state.days.filter((d) => d.stay && d.stay.trim()).length;
-    const badges = [`🗓️ ${tripDurationLabel()}`, `📍 일정 ${itemCount}개`];
+    const badges = [`🗓️ ${tripDurationLabel()}`];
     if (stayCount) badges.push(`🏨 숙박 ${stayCount}곳`);
     document.getElementById('trip-badges').innerHTML =
         badges.map((b) => `<span class="hero-badge">${escapeHtml(b)}</span>`).join('');
