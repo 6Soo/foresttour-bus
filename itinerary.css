@@ -68,22 +68,35 @@ body {
 
 .brand-logo { font-size: 18px; }
 
-.top-actions {
+/* ---------- 도구 전환 내비게이션 ---------- */
+.tool-nav {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 2px 16px 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
-.top-link {
+.tool-nav::-webkit-scrollbar { display: none; }
+
+.tool-nav a {
+    flex-shrink: 0;
     text-decoration: none;
     background: #fff;
     color: var(--text-sub);
     font-size: 13px;
     font-weight: 700;
-    padding: 8px 13px;
+    padding: 8px 14px;
     border-radius: 99px;
     box-shadow: var(--shadow);
     white-space: nowrap;
+    transition: all 0.15s;
+}
+
+.tool-nav a.active {
+    background: var(--text);
+    color: #fff;
 }
 
 .edit-toggle {
