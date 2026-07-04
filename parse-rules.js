@@ -43,8 +43,13 @@ const PARSE_RULES = {
 
     // 숙박 패턴
     stayInline: /[\[【]\s*숙박\s*[-–—:：]?\s*([^\]】]+)[\]】]?/,                       // [숙박- 화순온천리조트+조식]
-    stayBracket: /^[\[【]([^\]】]*(?:호텔|리조트|산장|펜션|료칸|민박|게스트하우스|콘도|글램핑|캠핑|모텔|여관)[^\]】]*)[\]】]$/, // [반 시게루의 그 온천호텔]
+    // 줄 중간에 있어도 찾아내는 숙소 대괄호 (OCR이 줄을 붙여버린 경우 대비)
+    stayAnywhere: /[\[【]([^\]】\[【]*(?:호텔|리조트|산장|펜션|료칸|민박|게스트하우스|콘도|글램핑|캠핑|모텔|여관|연박)[^\]】\[【]*)[\]】]/,
+    // 여는 대괄호가 OCR에서 유실/오인식(ㅣ 등)된 숙소 줄
+    stayBrokenOpen: /^[ㅣl|I]?\s*([^\[\]【】]*(?:호텔|리조트|산장|펜션|료칸|민박|게스트하우스|콘도|온천지구|연박)[^\[\]【】]*)[\]】]\s*$/,
     stayKeyword: /^숙박\s*[-–—:：]\s*(.+)$/,                                          // 숙박: OO호텔
+    // 여러 줄 병합을 허용할 대괄호인지 판별 (숙박류일 때만 병합)
+    stayHint: /숙박|호텔|리조트|산장|펜션|료칸|민박|게스트하우스|콘도|글램핑|캠핑|모텔|여관|연박/,
 
     // 안내문 시작 패턴 (* 로 시작하는 줄 → 이후 줄도 안내문으로 이어짐)
     noteStart: /^[*＊✱]+\s*(.*)$/,
@@ -132,21 +137,82 @@ function extractStartDate(text) {
     return '';
 }
 
+// ---------- OCR 노이즈 정리 ----------
+// 의미 문자: 완성형 한글, 라틴 문자, 한자, 가나 (자모 ㅅㅇㅣ 등은 제외 — OCR 오인식이 많음)
+const MEANINGFUL_RE = /[가-힣a-zA-Z一-鿿぀-ヿ]/g;
+
+function meaningfulCount(s) {
+    return (String(s).match(MEANINGFUL_RE) || []).length;
+}
+
+// 숫자/기호 위주의 OCR 쓰레기 토큰 제거 (예: "53501001234", "0따하<307[")
+// minRatio: 토큰 내 의미 문자 비율 하한 (제목처럼 날짜·기호가 많은 텍스트는 낮춰서 사용)
+function cleanNoise(text, minRatio = 0.5) {
+    return String(text || '')
+        .split(/\s+/)
+        .filter((tok) => {
+            const m = meaningfulCount(tok);
+            if (m < 1) return false;
+            if (tok.length <= 2 && m < 2) return false;
+            if (/^[a-zA-Z]{1,2}$/.test(tok)) return false; // "Il", "uo" 같은 OCR 잔여물
+            return m / tok.length >= minRatio;
+        })
+        .join(' ')
+        .trim();
+}
+
+function isDayHeaderLine(line) {
+    return PARSE_RULES.dayHeaders.some((h) => h.re.test(line));
+}
+
 // ---------- 일정 텍스트 파싱 ----------
-function parseScheduleText(raw) {
-    // 줄 정리 + 여러 줄에 걸친 [숙박 ...] 대괄호 병합
-    const rawLines = String(raw || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+// opts.ocr: true 면 OCR 결과로 간주하고 숫자/기호 쓰레기 토큰 필터를 적용
+//           (직접 붙여넣은 텍스트는 필터 없이 그대로 보존)
+function parseScheduleText(raw, opts = {}) {
+    const noisy = !!opts.ocr;
+    const denoise = (s, r) => (noisy ? cleanNoise(s, r) : String(s || '').trim());
+
+    // 0) OCR이 줄을 붙여버려도 일차 구분(<제N일> 등)은 새 줄에서 시작하도록 분리
+    const pre = String(raw || '')
+        .replace(/<\s*제\s*(\d{1,2})\s*일\s*차?\s*>/g, '\n<제$1일> ')
+        .replace(/(\s)([Dd][Aa][Yy]\s*\.?\s*\d{1,2}\s*[.·:~\-])/g, '$1\n$2');
+
+    // 1) 줄 정리 + 여러 줄에 걸친 [숙박 ...] 대괄호 병합
+    //    - 숙박류 대괄호일 때만, 최대 3줄까지만 병합 (OCR 쓰레기 '['에 전체가 붙는 사고 방지)
+    //    - 병합 중 일차 시작 줄을 만나면 즉시 중단
+    const rawLines = pre.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
     const lines = [];
     let buf = '';
-    rawLines.forEach((l) => {
-        buf = buf ? buf + ' ' + l : l;
-        const opens = (buf.match(/[\[【]/g) || []).length;
-        const closes = (buf.match(/[\]】]/g) || []).length;
-        if (opens > closes) return; // 대괄호가 닫힐 때까지 다음 줄과 병합
-        lines.push(buf);
+    let bufCount = 0;
+    const flush = () => {
+        if (buf) lines.push(buf);
         buf = '';
+        bufCount = 0;
+    };
+    rawLines.forEach((l) => {
+        if (buf) {
+            if (isDayHeaderLine(l) || bufCount >= 3) {
+                flush();
+            } else {
+                buf += ' ' + l;
+                bufCount++;
+                const opens = (buf.match(/[\[【]/g) || []).length;
+                const closes = (buf.match(/[\]】]/g) || []).length;
+                if (closes >= opens) flush();
+                return;
+            }
+        }
+        const opens = (l.match(/[\[【]/g) || []).length;
+        const closes = (l.match(/[\]】]/g) || []).length;
+        const tail = l.slice(Math.max(l.lastIndexOf('['), l.lastIndexOf('【')));
+        if (opens > closes && PARSE_RULES.stayHint.test(tail)) {
+            buf = l;
+            bufCount = 1;
+        } else {
+            lines.push(l);
+        }
     });
-    if (buf) lines.push(buf);
+    flush();
 
     const data = { title: '', startDate: '', note: '', days: [] };
     let currentDay = null;
@@ -154,21 +220,33 @@ function parseScheduleText(raw) {
     const noteLines = [];
 
     function addItem(text) {
-        const clean = text.replace(/^[•·\-–—▪◦☐✔]+\s*/, '').trim();
-        if (!clean) return;
+        const clean = denoise(text.replace(/^[•·\-–—▪◦☐✔]+\s*/, ''));
+        if (!clean || (noisy && meaningfulCount(clean) < 2)) return; // OCR 쓰레기만 남은 줄은 버림
         currentDay.items.push({ cat: classifyText(clean), text: clean });
     }
 
     function addLine(line) {
+        // 1) [숙박- ...] 명시 표기
         const s1 = line.match(PARSE_RULES.stayInline);
         if (s1) {
-            currentDay.stay = s1[1].trim();
+            currentDay.stay = denoise(s1[1]) || s1[1].trim();
             const before = line.slice(0, s1.index).trim();
             if (before) addItem(before);
             return;
         }
-        const s2 = line.match(PARSE_RULES.stayBracket) || line.match(PARSE_RULES.stayKeyword);
-        if (s2) { currentDay.stay = s2[1].trim(); return; }
+        // 2) 줄 어디에 있어도 [OO호텔] 류 대괄호는 숙박으로 (앞뒤 나머지는 항목으로)
+        const s2 = line.match(PARSE_RULES.stayAnywhere);
+        if (s2) {
+            currentDay.stay = denoise(s2[1]) || s2[1].trim();
+            const before = line.slice(0, s2.index).trim();
+            const after = line.slice(s2.index + s2[0].length).trim();
+            if (before) addItem(before);
+            if (after) addItem(after);
+            return;
+        }
+        // 3) 여는 대괄호가 유실된 숙소 줄, '숙박:' 표기
+        const s3 = line.match(PARSE_RULES.stayBrokenOpen) || line.match(PARSE_RULES.stayKeyword);
+        if (s3) { currentDay.stay = denoise(s3[1]) || s3[1].trim(); return; }
         addItem(line);
     }
 
@@ -204,7 +282,8 @@ function parseScheduleText(raw) {
         if (!currentDay) {
             // 첫 일차 이전의 줄 → 여행 제목 후보 (날짜가 들어 있으면 출발일도 추출)
             if (!data.title) {
-                data.title = line.replace(/^[\[【]|[\]】]$/g, '').trim();
+                const t = denoise(line.replace(/^[<\[【]+|[>\]】]+$/g, ''), 0.3);
+                if (t) data.title = t;
                 if (!data.startDate) data.startDate = extractStartDate(line);
             }
             continue;
