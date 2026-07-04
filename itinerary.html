@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="숲길따라 감성여행 - 여행 일정표">
+    <meta name="theme-color" content="#f2f4f6">
+    <meta property="og:title" content="숲길따라 감성여행 일정표">
+    <meta property="og:description" content="함께 떠나는 여행 일정을 확인해 보세요 🌲">
+    <meta property="og:type" content="website">
+    <title>숲길따라 감성여행 · 여행 일정</title>
+    <script>
+        if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search + window.location.hash;
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="itinerary.css">
+</head>
+<body>
+    <div class="wrap">
+        <header class="top-bar">
+            <div class="brand">
+                <span class="brand-logo">🌲</span>
+                <span class="brand-name">숲길따라 감성여행</span>
+            </div>
+            <button id="edit-toggle" class="edit-toggle" type="button">편집</button>
+        </header>
+
+        <div id="shared-banner" class="shared-banner" hidden>
+            🔗 공유받은 일정을 보고 있어요
+        </div>
+
+        <main id="main">
+            <!-- 여행 요약 히어로 -->
+            <section class="hero">
+                <div class="hero-deco" aria-hidden="true"></div>
+                <p class="hero-eyebrow">TRAVEL ITINERARY</p>
+                <h1 id="trip-title" class="hero-title" data-placeholder="여행 이름을 입력하세요"></h1>
+                <p id="trip-dates" class="hero-dates"></p>
+                <div class="hero-date-edit edit-only">
+                    <label for="start-date">출발일</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div id="trip-badges" class="hero-badges"></div>
+            </section>
+
+            <!-- 일차별 카드 -->
+            <section id="days"></section>
+
+            <button id="add-day" class="add-day edit-only" type="button">＋ 날짜 추가</button>
+
+            <!-- 안내 사항 -->
+            <section id="note-card" class="note-card">
+                <h3 class="note-title">📌 안내</h3>
+                <p id="trip-note" class="note-body" data-placeholder="참가자분들께 안내할 내용을 적어주세요"></p>
+            </section>
+
+            <p class="footer-hint">숲길따라 감성여행 · foresttour.kr</p>
+        </main>
+
+        <!-- 하단 고정 액션 바 -->
+        <footer class="action-bar">
+            <button id="copy-btn" class="btn btn-copy" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                일정 복사
+            </button>
+            <button id="kakao-btn" class="btn btn-kakao" type="button">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6C6.4 2.6 1.8 6.2 1.8 10.6c0 2.85 1.9 5.35 4.75 6.75l-1.1 4.05c-.1.37.3.66.62.45l4.75-3.15c.38.04.78.06 1.18.06 5.6 0 10.2-3.6 10.2-8.16S17.6 2.6 12 2.6z"/></svg>
+                카카오톡 공유
+            </button>
+        </footer>
+    </div>
+
+    <!-- 카테고리 선택 바텀시트 -->
+    <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+    <div id="cat-sheet" class="sheet" hidden>
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">일정 종류 선택</h3>
+        <div id="cat-list" class="cat-list"></div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="itinerary.js"></script>
+</body>
+</html>
