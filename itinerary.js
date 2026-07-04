@@ -459,9 +459,7 @@ async function captureItineraryImage() {
             scale: 2,
             useCORS: true,
         });
-        return await new Promise((resolve, reject) => {
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('캡처 실패'))), 'image/png');
-        });
+        return await canvasToBlob(canvas);
     } finally {
         el.classList.remove('capturing');
     }
