@@ -28,25 +28,25 @@ function defaultData() {
             },
             {
                 items: [
-                    { cat: 'trek', text: '가사문학길 (소쇄원~취가정~환벽당~식영정)' },
+                    { cat: 'walk', text: '가사문학길 (소쇄원~취가정~환벽당~식영정)' },
                     { cat: 'spot', text: '날씨 더우면 광주호 호숫길' },
                     { cat: 'tour', text: '명옥헌원림 배롱나무' },
                     { cat: 'tour', text: '창평 슬로시티마을길' },
-                    { cat: 'trek', text: '담양 죽녹원 / 메타세콰이어길' },
+                    { cat: 'walk', text: '담양 죽녹원 / 메타세콰이어길' },
                 ],
                 stay: '지리산운봉고원 O호텔 + 조식',
             },
             {
                 items: [
                     { cat: 'tour', text: '지리산허브밸리 / 박초월생가마을' },
-                    { cat: 'trek', text: '장수 방화동생태길' },
-                    { cat: 'trek', text: '산림치유원 힐링산책 (1)' },
+                    { cat: 'walk', text: '장수 방화동생태길' },
+                    { cat: 'walk', text: '산림치유원 힐링산책 (1)' },
                 ],
                 stay: '진안고원 산림치유원 + 석식 + 조식 (2025.11.6 정식 개원!)',
             },
             {
                 items: [
-                    { cat: 'trek', text: '산림치유원 힐링산책 (2)' },
+                    { cat: 'walk', text: '산림치유원 힐링산책 (2)' },
                     { cat: 'trek', text: '마이산 남부~북부 트레킹 (A/B)' },
                 ],
                 stay: '',
