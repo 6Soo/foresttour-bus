@@ -122,7 +122,11 @@ import 미리보기에서 사용자가 분류를 고치면 `localStorage('forest
    Playwright에서 `page.route('https://cdn.jsdelivr.net/**')`로 CDN을 로컬 npm 파일
    (`tesseract.js`, `tesseract.js-core`, `@tesseract.js-data/kor|eng`)로 라우팅하면
    이 환경에서도 업로드→OCR→미리보기 전체 흐름이 돌아간다. 텍스트 주입 테스트만으로 끝내지 말 것.
-3. main 병합 후 Pages 배포가 `success`인지 확인 (일시 오류로 `failure`가 나면 재트리거 필요).
+3. main 병합 후 Pages 배포가 `success`인지 확인. 일시 오류(`Deployment failed, try again later`)로
+   `failure`가 나면 **Actions API 재실행(rerun)을 쓰지 말 것** — 이 dynamic 워크플로는 재실행이
+   영원히 `queued` 상태로 남아 취소도 안 되고, 나중에 실패 메일만 발송한다 (실제 사고 3건).
+   대신 다음 실제 변경 커밋을 병합해서 새 배포를 트리거한다. 문서만 바뀐 경우에는
+   즉시 병합하지 말고 다음 기능 변경에 함께 실어 불필요한 배포(=실패 메일 위험)를 줄인다.
 
 ## 주의
 
