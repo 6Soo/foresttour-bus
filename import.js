@@ -76,7 +76,9 @@ $('analyze-image').addEventListener('click', async () => {
             setProgress('글자 인식 도구를 불러오는 중...', 0.02);
             await loadScript(TESSERACT_CDN);
         }
-        const worker = await window.Tesseract.createWorker('kor', 1, {
+        // kor+eng: 일정에 섞인 영문(호텔·식당명)을 한글 모델이 숫자 쓰레기로
+        // 읽는 것을 방지 (일본어 한자는 노이즈 필터가 걸러냄)
+        const worker = await window.Tesseract.createWorker(['kor', 'eng'], 1, {
             logger: (m) => {
                 if (m.status === 'loading language traineddata' || m.status === 'loading tesseract core') {
                     setProgress('한글 인식 데이터를 내려받는 중... (처음 한 번만)', 0.05 + (m.progress || 0) * 0.15);
@@ -91,7 +93,7 @@ $('analyze-image').addEventListener('click', async () => {
         }
         await worker.terminate();
         setProgress('일정 분류 중...', 0.98);
-        finishAnalyze(fullText);
+        finishAnalyze(fullText, { ocr: true });
     } catch (err) {
         showStep('input');
         toast('이미지 인식에 실패했어요. 텍스트 붙여넣기를 이용해 보세요 🙏');
@@ -105,8 +107,8 @@ $('analyze-text').addEventListener('click', () => {
     finishAnalyze(text);
 });
 
-function finishAnalyze(text) {
-    parsed = parseScheduleText(text);
+function finishAnalyze(text, opts) {
+    parsed = parseScheduleText(text, opts);
     const total = parsed.days.reduce((n, d) => n + d.items.length, 0) + parsed.days.filter((d) => d.stay).length;
     if (total === 0) {
         showStep('input');
