@@ -76,9 +76,9 @@ $('analyze-image').addEventListener('click', async () => {
             setProgress('글자 인식 도구를 불러오는 중...', 0.02);
             await loadScript(TESSERACT_CDN);
         }
-        // kor+eng: 일정에 섞인 영문(호텔·식당명)을 한글 모델이 숫자 쓰레기로
-        // 읽는 것을 방지 (일본어 한자는 노이즈 필터가 걸러냄)
-        const worker = await window.Tesseract.createWorker(['kor', 'eng'], 1, {
+        // kor+eng+jpn: 일정에 섞인 영문 상호명과 일본어 지명(玉川寺, 村上店 등)을
+        // 한글 모델이 숫자 쓰레기로 읽는 것을 방지
+        const worker = await window.Tesseract.createWorker(['kor', 'eng', 'jpn'], 1, {
             logger: (m) => {
                 if (m.status === 'loading language traineddata' || m.status === 'loading tesseract core') {
                     setProgress('한글 인식 데이터를 내려받는 중... (처음 한 번만)', 0.05 + (m.progress || 0) * 0.15);
