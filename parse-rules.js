@@ -86,6 +86,14 @@ const PARSE_RULES = {
     // '~길'로 끝나는 코스명은 산책으로 분류 (본격 산행은 '트레킹' 키워드가 먼저 잡음)
     walkSuffix: /길\s*(?:$|\/|~|\()/,
 
+    // 검색으로 확인한 지명·장소별 분류 사전 — 키워드 규칙보다 우선 적용
+    // 새 이미지에서 낯선 지명이 나오면 웹 검색으로 확인 후 {패턴, 분류, 근거 주석} 형태로 추가
+    knownPlaces: [
+        // にかほ市観光拠点センター「にかほっと」(아키타 니카호) — 사용자 확인: 트레킹 코스 거점
+        // (검색: 관광거점센터, 푸드코트·특산품매장·족욕 보유 — 점심 장소가 아니라 코스로 사용)
+        { re: /nikaho\s*tourist\s*base\s*center|nikahot|니카호트|니카홋토/i, cat: 'trek' },
+    ],
+
     // 검색으로 확인한 복합 지명 — 인접 항목이 이 순서로 나오면 한 항목으로 병합
     // (애매한 지명 경계는 웹 검색으로 실제 관계를 확인한 뒤 여기에 기록 — CLAUDE.md 참고)
     compoundPlaces: [
@@ -123,18 +131,29 @@ function addLearnedRule(text, cat) {
 }
 
 // ---------- 카테고리 분류 ----------
+// 검색으로 확인된 지명 사전 조회
+function lookupKnownPlace(text) {
+    for (const p of PARSE_RULES.knownPlaces) {
+        if (p.re.test(text)) return p.cat;
+    }
+    return null;
+}
+
 function classifyText(text) {
     const t = String(text || '').trim();
     // 1) 사용자가 교정했던 항목 우선
     for (const r of getLearnedRules()) {
         if (r.kw && CATS[r.cat] && (t === r.kw || (r.kw.length >= 4 && t.includes(r.kw)))) return r.cat;
     }
-    // 2) 키워드 규칙
+    // 2) 검색으로 확인된 지명 사전
+    const place = lookupKnownPlace(t);
+    if (place) return place;
+    // 3) 키워드 규칙
     const low = t.toLowerCase();
     for (const [cat, kws] of PARSE_RULES.categoryKeywords) {
         if (kws.some((k) => low.includes(k))) return cat;
     }
-    // 3) '~길' 코스명
+    // 4) '~길' 코스명
     if (PARSE_RULES.walkSuffix.test(t)) return 'walk';
     return 'tour';
 }
@@ -310,10 +329,29 @@ function parseScheduleText(raw, opts = {}) {
         const meal = glued.match(PARSE_RULES.mealSplit);
         if (meal && !/^(점심|저녁|조식|석식)/.test(meal[1])) {
             addItem(meal[1]);
-            addItem(meal[2]);
+            addMealItem(meal[2]);
+            return;
+        }
+        if (/^\s*(점심|저녁|조식|석식)/.test(glued)) {
+            addMealItem(glued);
             return;
         }
         addItem(glued);
+    }
+
+    // '점심' 뒤 메뉴·상호명은 생략될 수 있음 — 표기 뒤에 오는 것이
+    // 검색으로 확인된 비식사 장소(knownPlaces)면 식사와 장소를 분리
+    function addMealItem(text) {
+        const m = text.trim().match(/^(점심|저녁|조식|석식)\s*[.·:~-]*\s*(.*)$/);
+        if (m && m[2]) {
+            const placeCat = lookupKnownPlace(m[2]);
+            if (placeCat && placeCat !== 'food') {
+                currentDay.items.push({ cat: 'food', text: m[1] });
+                addItem(m[2]);
+                return;
+            }
+        }
+        addItem(text);
     }
 
     for (const line of lines) {
@@ -380,8 +418,11 @@ function parseScheduleText(raw, opts = {}) {
             }
         }
         // 식사 마커만 남은 항목('점심')은 뒤따르는 메뉴·상호명 항목과 병합
+        // 단, 뒤 항목이 검색으로 확인된 비식사 장소면 메뉴가 생략된 것이므로 합치지 않음
         for (let i = 0; i < day.items.length - 1; i++) {
             if (/^(점심|저녁|조식|석식)$/.test(day.items[i].text.trim())) {
+                const placeCat = lookupKnownPlace(day.items[i + 1].text);
+                if (placeCat && placeCat !== 'food') continue;
                 const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
                 day.items.splice(i, 2, { cat: 'food', text: merged });
             }
