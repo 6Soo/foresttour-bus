@@ -92,6 +92,13 @@ const PARSE_RULES = {
         // 야마가타 유자마치: 丸池様와 十六羅漢岩은 ~2km 거리의 세트 코스 (원문에서 한 줄)
         ['마루이케', '16나한상'],
     ],
+
+    // OCR 고정 오인식 교정 — 라틴+한글이 한 단어에 붙으면 OCR이 토큰 전체를
+    // 영문으로 읽어 한글부가 붕괴됨. 검색으로 실존 지명 확인 후 등록. (OCR 입력에만 적용)
+    ocrFixes: [
+        // 刺巻湿原 (아키타 센보쿠, 미즈바쇼 군락지): 'SASHIMAKI습원' → OCR이 'SASHIMAKIE'로 읽음
+        { re: /SASHIMAKI\s*E(?![A-Za-z])/g, to: 'SASHIMAKI습원' },
+    ],
 };
 
 // ---------- 사용자 교정 학습 (localStorage) ----------
@@ -212,8 +219,14 @@ function parseScheduleText(raw, opts = {}) {
     const noisy = !!opts.ocr;
     const denoise = (s, r) => (noisy ? cleanNoise(s, r) : String(s || '').trim());
 
-    // 0) OCR이 줄을 붙여버려도 일차 구분(<제N일> 등)은 새 줄에서 시작하도록 분리
-    const pre = String(raw || '')
+    // 0-a) OCR 고정 오인식 교정 (검색으로 확인된 실존 지명)
+    let src = String(raw || '');
+    if (noisy) {
+        for (const f of PARSE_RULES.ocrFixes) src = src.replace(f.re, f.to);
+    }
+
+    // 0-b) OCR이 줄을 붙여버려도 일차 구분(<제N일> 등)은 새 줄에서 시작하도록 분리
+    const pre = src
         .replace(/<\s*제\s*(\d{1,2})\s*일\s*차?\s*>/g, '\n<제$1일> ')
         .replace(/(\s)([Dd][Aa][Yy]\s*\.?\s*\d{1,2}\s*[.·:~\-])/g, '$1\n$2');
 
