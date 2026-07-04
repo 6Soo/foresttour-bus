@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="숲길따라 감성여행 - 이미지로 일정 만들기">
+    <meta name="theme-color" content="#f2f4f6">
+    <title>숲길따라 감성여행 · 이미지로 일정 만들기</title>
+    <script>
+        if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search + window.location.hash;
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="itinerary.css">
+    <link rel="stylesheet" href="import.css">
+</head>
+<body class="editing">
+    <div class="wrap">
+        <header class="top-bar">
+            <div class="brand">
+                <span class="brand-logo">🌲</span>
+                <span class="brand-name">숲길따라 감성여행</span>
+            </div>
+            <div class="top-actions">
+                <a href="itinerary.html" class="top-link">✏️ 직접 입력</a>
+            </div>
+        </header>
+
+        <main id="main" class="import-main">
+            <!-- 1단계: 입력 -->
+            <section id="step-input">
+                <div class="intro">
+                    <h1>📷 이미지로 일정 만들기</h1>
+                    <p>카페에 올리던 일정 이미지나 텍스트를 넣으면<br>자동으로 분류해서 일정표를 만들어 드려요.</p>
+                </div>
+
+                <nav class="tabs">
+                    <button class="tab active" data-tab="image" type="button">🖼️ 이미지 올리기</button>
+                    <button class="tab" data-tab="text" type="button">📝 텍스트 붙여넣기</button>
+                </nav>
+
+                <section id="pane-image" class="pane">
+                    <label class="dropzone" for="file-input">
+                        <span class="drop-emoji">🖼️</span>
+                        <strong>일정 이미지 선택</strong>
+                        <span class="drop-sub">스크린샷 여러 장도 한 번에 올릴 수 있어요</span>
+                        <input id="file-input" type="file" accept="image/*" multiple hidden>
+                    </label>
+                    <div id="thumbs" class="thumbs"></div>
+                    <button id="analyze-image" class="big-btn" type="button" disabled>이미지 분석하기</button>
+                    <p class="privacy-hint">🔒 글자 인식은 휴대폰 안에서만 처리되고, 이미지는 어디에도 업로드되지 않아요.</p>
+                </section>
+
+                <section id="pane-text" class="pane" hidden>
+                    <textarea id="text-input" rows="10" placeholder="첫날..화순적벽 투어(예약)
+        [숙박- 화순온천리조트+조식]
+
+둘쨋날..가사문학길
+        담양 죽녹원/메타세콰이어길
+        ..."></textarea>
+                    <button id="analyze-text" class="big-btn" type="button">텍스트 분석하기</button>
+                </section>
+            </section>
+
+            <!-- 2단계: 분석 중 -->
+            <section id="step-progress" hidden>
+                <div class="progress-card">
+                    <div class="progress-emoji">🔍</div>
+                    <p id="progress-status">준비 중...</p>
+                    <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+                </div>
+            </section>
+
+            <!-- 3단계: 결과 미리보기 -->
+            <section id="step-preview" hidden>
+                <div class="preview-head">
+                    <h2>분석 결과 ✨</h2>
+                    <p>아이콘을 누르면 종류를 바꿀 수 있어요.<br>고쳐주신 분류는 기억해뒀다가 다음 분석에 반영돼요.</p>
+                </div>
+                <div class="preview-title-card">
+                    <div class="preview-label">여행 이름</div>
+                    <h3 id="p-title" contenteditable="plaintext-only" data-placeholder="여행 이름"></h3>
+                    <div id="p-date-hint" class="preview-date-hint"></div>
+                </div>
+                <div id="p-days"></div>
+                <div class="preview-title-card" id="p-note-card">
+                    <div class="preview-label">📌 안내</div>
+                    <p id="p-note" class="note-body" contenteditable="plaintext-only" data-placeholder="안내 문구 (선택)"></p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="action-bar" id="preview-actions" hidden>
+            <button id="retry-btn" class="btn btn-copy" type="button">다시 분석</button>
+            <button id="open-btn" class="btn btn-green" type="button">이 일정으로 만들기 →</button>
+        </footer>
+    </div>
+
+    <!-- 카테고리 선택 바텀시트 -->
+    <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
+    <div id="cat-sheet" class="sheet" hidden>
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">일정 종류 선택</h3>
+        <div id="cat-list" class="cat-list"></div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="parse-rules.js"></script>
+    <script src="import.js"></script>
+</body>
+</html>

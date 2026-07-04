@@ -8,17 +8,7 @@ const KAKAO_JS_KEY = '';
 
 const STORAGE_KEY = 'foresttour-itinerary-v1';
 
-// ---------- 카테고리 정의 ----------
-const CATS = {
-    tour: { label: '관광',   emoji: '🌸', color: '#d6549b', bg: '#fdeef6' },
-    trek: { label: '트레킹', emoji: '🥾', color: '#0d9463', bg: '#e7f6ef' },
-    move: { label: '이동',   emoji: '🚌', color: '#3182f6', bg: '#eaf2fe' },
-    food: { label: '식사',   emoji: '🍚', color: '#e8830c', bg: '#fef3e2' },
-    spa:  { label: '온천',   emoji: '♨️', color: '#e05b4b', bg: '#fdeeec' },
-    shop: { label: '쇼핑',   emoji: '🛍️', color: '#8b5cf6', bg: '#f3eefe' },
-    rest: { label: '휴식',   emoji: '☕', color: '#64748b', bg: '#eef1f4' },
-    spot: { label: '포인트', emoji: '📍', color: '#0ea5b7', bg: '#e6f7fa' },
-};
+// 카테고리 정의(CATS)와 공유 링크 인코딩은 parse-rules.js에서 로드됩니다.
 
 const DAY_NAMES = ['첫째 날', '둘째 날', '셋째 날', '넷째 날', '다섯째 날', '여섯째 날', '일곱째 날', '여덟째 날', '아홉째 날', '열째 날'];
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -69,21 +59,6 @@ function defaultData() {
 let state;
 let editing = false;
 let sheetTarget = null; // { d, i }
-
-// ---------- 데이터 인코딩 (공유 링크용) ----------
-function encodeData(data) {
-    const bytes = new TextEncoder().encode(JSON.stringify(data));
-    let bin = '';
-    bytes.forEach((b) => { bin += String.fromCharCode(b); });
-    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function decodeData(str) {
-    const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(b64);
-    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
-}
 
 function loadInitial() {
     // 1) 공유 링크의 데이터 우선
