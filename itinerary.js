@@ -2,9 +2,7 @@
    숲길따라 감성여행 · 여행 일정 페이지
    ============================================ */
 
-// 카카오 개발자 JavaScript 키를 입력하면 카카오톡 네이티브 공유가 활성화됩니다.
-// (없으면 기기 공유 시트 → 카카오톡 선택 방식으로 동작)
-const KAKAO_JS_KEY = '';
+const HTML2CANVAS_CDN = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
 
 const STORAGE_KEY = 'foresttour-itinerary-v1';
 
@@ -410,10 +408,6 @@ function buildShareText() {
     return lines.join('\n');
 }
 
-function buildShareUrl() {
-    return `${window.location.origin}${window.location.pathname}#d=${encodeData(state)}`;
-}
-
 // ---------- 클립보드 복사 ----------
 async function copyText(text) {
     try {
@@ -437,52 +431,71 @@ document.getElementById('copy-btn').addEventListener('click', async () => {
     toast(ok ? '일정이 복사되었습니다 📋' : '복사에 실패했습니다 😢');
 });
 
-// ---------- 카카오톡 공유 ----------
-document.getElementById('kakao-btn').addEventListener('click', async () => {
-    const url = buildShareUrl();
-    const title = state.title || '여행 일정';
-
-    // 1) 카카오 SDK (키가 설정된 경우)
-    if (KAKAO_JS_KEY && window.Kakao && window.Kakao.isInitialized()) {
-        window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-                title: `🌲 ${title}`,
-                description: `${tripDatesLabel()} · ${tripDurationLabel()} 일정을 확인해 보세요!`,
-                imageUrl: '',
-                link: { mobileWebUrl: url, webUrl: url },
-            },
-            buttons: [{ title: '일정 보기', link: { mobileWebUrl: url, webUrl: url } }],
-        });
-        return;
-    }
-
-    // 2) 기기 공유 시트 (카카오톡 선택 가능)
-    if (navigator.share) {
-        try {
-            await navigator.share({
-                title: `🌲 ${title}`,
-                text: buildShareText(),
-                url,
-            });
-            return;
-        } catch (e) {
-            if (e.name === 'AbortError') return; // 사용자가 취소
-        }
-    }
-
-    // 3) 폴백: 링크 복사
-    const ok = await copyText(`${buildShareText()}\n\n👉 일정 보기: ${url}`);
-    toast(ok ? '일정과 링크를 복사했어요! 카카오톡에 붙여넣어 주세요 💬' : '공유에 실패했습니다 😢');
-});
-
-// 카카오 SDK 로드 (키가 있을 때만)
-if (KAKAO_JS_KEY) {
-    const s = document.createElement('script');
-    s.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js';
-    s.onload = () => { window.Kakao.init(KAKAO_JS_KEY); };
-    document.head.appendChild(s);
+// ---------- 카카오톡 공유 (일정 전체를 이미지로 캡처해서 공유) ----------
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('스크립트 로드 실패'));
+        document.head.appendChild(s);
+    });
 }
+
+async function captureItineraryImage() {
+    if (!window.html2canvas) await loadScript(HTML2CANVAS_CDN);
+    const el = document.getElementById('main');
+    el.classList.add('capturing');
+    try {
+        const canvas = await window.html2canvas(el, {
+            backgroundColor: '#f2f4f6',
+            scale: 2,
+            useCORS: true,
+        });
+        return await new Promise((resolve, reject) => {
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('캡처 실패'))), 'image/png');
+        });
+    } finally {
+        el.classList.remove('capturing');
+    }
+}
+
+const kakaoBtn = document.getElementById('kakao-btn');
+kakaoBtn.addEventListener('click', async () => {
+    if (editing) editToggle.click(); // 편집 중이면 저장하고 보기 화면으로 전환 후 캡처
+
+    const originalHtml = kakaoBtn.innerHTML;
+    kakaoBtn.disabled = true;
+    kakaoBtn.textContent = '이미지 만드는 중... ⏳';
+    try {
+        const blob = await captureItineraryImage();
+        const dateTag = (state.startDate || '').replace(/-/g, '') || 'itinerary';
+        const file = new File([blob], `숲길따라_일정_${dateTag}.png`, { type: 'image/png' });
+
+        // 1) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file], title: `🌲 ${state.title || '여행 일정'}` });
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return; // 사용자가 취소
+            }
+        }
+
+        // 2) 폴백: 이미지 파일로 저장
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        toast('일정 이미지를 저장했어요. 카카오톡에서 사진으로 보내주세요 📷');
+    } catch (e) {
+        toast('이미지 생성에 실패했어요 😢');
+    } finally {
+        kakaoBtn.innerHTML = originalHtml;
+        kakaoBtn.disabled = false;
+    }
+});
 
 // ---------- 토스트 ----------
 let toastTimer;
