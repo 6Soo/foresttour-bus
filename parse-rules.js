@@ -165,6 +165,24 @@ function isDayHeaderLine(line) {
     return PARSE_RULES.dayHeaders.some((h) => h.re.test(line));
 }
 
+// 모바일 화면 폭 때문에 꺾인 줄인지 문맥으로 판단 (OCR 입력 전용)
+// 예: "트레킹(1시간/2" + "시간)" / "Sashimaki" + "shitsugen marsh" / "…환벽" + "당~식영정)"
+function isContinuationLine(prev, cur) {
+    if (!prev || !cur) return false;
+    if (isDayHeaderLine(cur)) return false;
+    if (/^[\[【]/.test(cur) || /^[*＊✱]/.test(cur)) return false; // 숙박/안내문 시작은 별개
+    // 1) 닫는 괄호나 연결 기호로 시작하면 앞 줄의 연속
+    if (/^[)\]〉>~+/&,.·-]/.test(cur)) return true;
+    // 2) 앞 줄의 여는 괄호가 안 닫혔고, 이번 줄이 곧 닫으면 연속 (예: "트레킹(1시간/2" + "시간)")
+    //    ※ 닫지 않는 줄까지 병합하면 OCR 쓰레기 '(' 하나에 일차 전체가 붙는 사고가 남
+    const opens = (prev.match(/\(/g) || []).length;
+    const closes = (prev.match(/\)/g) || []).length;
+    if (opens > closes && /^[^()]{0,20}\)/.test(cur)) return true;
+    // 3) 영문 단어가 줄 끝/줄 시작으로 이어지면 연속 (예: "Tourist Base" + "Center")
+    if (/[A-Za-z]$/.test(prev) && /^[A-Za-z]/.test(cur)) return true;
+    return false;
+}
+
 // ---------- 일정 텍스트 파싱 ----------
 // opts.ocr: true 면 OCR 결과로 간주하고 숫자/기호 쓰레기 토큰 필터를 적용
 //           (직접 붙여넣은 텍스트는 필터 없이 그대로 보존)
@@ -208,6 +226,9 @@ function parseScheduleText(raw, opts = {}) {
         if (opens > closes && PARSE_RULES.stayHint.test(tail)) {
             buf = l;
             bufCount = 1;
+        } else if (noisy && lines.length && isContinuationLine(lines[lines.length - 1], l)) {
+            // 모바일 화면 폭 때문에 꺾인 줄은 앞 줄에 이어붙임 (문맥 판단)
+            lines[lines.length - 1] += ' ' + l;
         } else {
             lines.push(l);
         }
