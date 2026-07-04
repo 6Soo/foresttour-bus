@@ -279,6 +279,56 @@ body.editing .hero-title {
     cursor: pointer;
 }
 
+/* 일자별 이미지 공유 버튼 */
+.day-share {
+    margin-left: auto;
+    border: none;
+    background: var(--green-soft);
+    color: var(--green-deep);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.15s;
+    white-space: nowrap;
+}
+
+.day-share:active { transform: scale(0.94); filter: brightness(0.95); }
+.day-share:disabled { opacity: 0.6; }
+
+/* 일자별 공유용 오프스크린 캡처 컨테이너 */
+.day-capture {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 420px;
+    padding: 18px 16px 6px;
+    background: var(--bg);
+}
+
+.day-capture-head { padding: 2px 6px 12px; }
+
+.day-capture-head .brand-mini {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--green-deep);
+    letter-spacing: -0.2px;
+}
+
+.day-capture-head h2 {
+    margin-top: 3px;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    word-break: keep-all;
+}
+
+.day-capture .day-card { margin-top: 0; }
+
+.day-capture .footer-hint { margin-top: 14px; }
+
 /* ---------- 타임라인 ---------- */
 .timeline { position: relative; }
 

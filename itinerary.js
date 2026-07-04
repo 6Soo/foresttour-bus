@@ -179,7 +179,9 @@ function renderDays() {
             <div class="day-head">
                 <span class="day-chip">DAY ${d + 1}</span>
                 <span class="day-date">${escapeHtml(dateLabel)}</span>
-                ${editing ? `<button type="button" class="day-del" data-act="day-del" data-d="${d}">삭제</button>` : ''}
+                ${editing
+                    ? `<button type="button" class="day-del" data-act="day-del" data-d="${d}">삭제</button>`
+                    : `<button type="button" class="day-share" data-act="day-share" data-d="${d}">📤 공유</button>`}
             </div>
             <div class="timeline">${itemsHtml || (editing ? '' : '<p style="color:var(--text-weak);font-size:14px;">일정이 없습니다</p>')}</div>
             ${editing ? `<button type="button" class="add-item edit-only" data-d="${d}" data-act="add-item">＋ 일정 추가</button>` : ''}
@@ -267,6 +269,11 @@ document.getElementById('main').addEventListener('keydown', (e) => {
 });
 
 document.getElementById('main').addEventListener('click', (e) => {
+    const shareBtn = e.target.closest('[data-act="day-share"]');
+    if (shareBtn && !editing) {
+        shareDay(+shareBtn.dataset.d, shareBtn);
+        return;
+    }
     if (!editing) return;
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
@@ -460,6 +467,36 @@ async function captureItineraryImage() {
     }
 }
 
+// 이미지 blob을 공유 시트로 보내고, 미지원 환경이면 파일 저장으로 폴백
+async function shareImageBlob(blob, filename, title) {
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // 1) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file], title });
+            return;
+        } catch (e) {
+            if (e.name === 'AbortError') return; // 사용자가 취소
+        }
+    }
+
+    // 2) 폴백: 이미지 파일로 저장
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    toast('일정 이미지를 저장했어요. 카카오톡에서 사진으로 보내주세요 📷');
+}
+
+function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('캡처 실패'))), 'image/png');
+    });
+}
+
+// 전체 일정 공유
 const kakaoBtn = document.getElementById('kakao-btn');
 kakaoBtn.addEventListener('click', async () => {
     if (editing) editToggle.click(); // 편집 중이면 저장하고 보기 화면으로 전환 후 캡처
@@ -470,25 +507,7 @@ kakaoBtn.addEventListener('click', async () => {
     try {
         const blob = await captureItineraryImage();
         const dateTag = (state.startDate || '').replace(/-/g, '') || 'itinerary';
-        const file = new File([blob], `숲길따라_일정_${dateTag}.png`, { type: 'image/png' });
-
-        // 1) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능)
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({ files: [file], title: `🌲 ${state.title || '여행 일정'}` });
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') return; // 사용자가 취소
-            }
-        }
-
-        // 2) 폴백: 이미지 파일로 저장
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = file.name;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-        toast('일정 이미지를 저장했어요. 카카오톡에서 사진으로 보내주세요 📷');
+        await shareImageBlob(blob, `숲길따라_일정_${dateTag}.png`, `🌲 ${state.title || '여행 일정'}`);
     } catch (e) {
         toast('이미지 생성에 실패했어요 😢');
     } finally {
@@ -496,6 +515,52 @@ kakaoBtn.addEventListener('click', async () => {
         kakaoBtn.disabled = false;
     }
 });
+
+// 일자별 공유 — 해당 일차 카드만 담은 이미지를 만들어 공유
+async function shareDay(d, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳';
+    try {
+        if (!window.html2canvas) await loadScript(HTML2CANVAS_CDN);
+
+        // 캡처용 오프스크린 컨테이너: 브랜드 헤더 + 해당 일차 카드 + 푸터
+        const wrap = document.createElement('div');
+        wrap.className = 'day-capture';
+        wrap.innerHTML = `
+            <div class="day-capture-head">
+                <span class="brand-mini">🌲 숲길따라 감성여행</span>
+                <h2>${escapeHtml(state.title || '여행 일정')}</h2>
+            </div>`;
+        const clone = document.querySelector(`.day-card[data-d="${d}"]`).cloneNode(true);
+        const cloneShare = clone.querySelector('.day-share');
+        if (cloneShare) cloneShare.remove(); // 캡처 이미지에는 공유 버튼 제외
+        wrap.appendChild(clone);
+        const foot = document.createElement('p');
+        foot.className = 'footer-hint';
+        foot.textContent = '숲길따라 감성여행 · foresttour.kr';
+        wrap.appendChild(foot);
+        document.body.appendChild(wrap);
+
+        try {
+            const canvas = await window.html2canvas(wrap, {
+                backgroundColor: '#f2f4f6',
+                scale: 2,
+                useCORS: true,
+            });
+            const blob = await canvasToBlob(canvas);
+            await shareImageBlob(blob, `숲길따라_일정_${d + 1}일차.png`,
+                `🌲 ${state.title || '여행 일정'} · ${d + 1}일차`);
+        } finally {
+            wrap.remove();
+        }
+    } catch (e) {
+        toast('이미지 생성에 실패했어요 😢');
+    } finally {
+        btn.textContent = original;
+        btn.disabled = false;
+    }
+}
 
 // ---------- 토스트 ----------
 let toastTimer;
