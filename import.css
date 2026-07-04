@@ -1,0 +1,245 @@
+/* ============================================
+   이미지로 일정 만들기 페이지 전용 스타일
+   (기본 토큰/컴포넌트는 itinerary.css 재사용)
+   ============================================ */
+
+.import-main { padding-top: 12px; }
+
+/* hidden 속성이 .action-bar 의 display:flex 에 지지 않도록 */
+[hidden] { display: none !important; }
+
+.intro {
+    text-align: center;
+    padding: 18px 8px 22px;
+}
+
+.intro h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.intro p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+
+/* ---------- 탭 ---------- */
+.tabs {
+    display: flex;
+    background: #e9ecef;
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-weak);
+    padding: 11px 6px;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tab.active {
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+
+.pane { margin-top: 14px; }
+
+/* ---------- 이미지 업로드 ---------- */
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--card);
+    border: 2px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 34px 20px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s;
+}
+
+.dropzone:active, .dropzone.dragover { border-color: var(--green); }
+
+.drop-emoji { font-size: 34px; margin-bottom: 4px; }
+
+.dropzone strong { font-size: 16px; font-weight: 800; }
+
+.drop-sub { font-size: 13px; color: var(--text-weak); }
+
+.thumbs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.thumb {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.thumb button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(25, 31, 40, 0.65);
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- 텍스트 입력 ---------- */
+#text-input {
+    width: 100%;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    font-family: inherit;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 18px;
+    resize: vertical;
+    min-height: 220px;
+    color: var(--text);
+}
+
+#text-input:focus { outline: 2px solid var(--green); }
+
+/* ---------- 버튼 ---------- */
+.big-btn {
+    width: 100%;
+    margin-top: 14px;
+    border: none;
+    border-radius: 16px;
+    background: var(--green);
+    color: #fff;
+    font-family: inherit;
+    font-size: 15.5px;
+    font-weight: 800;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.15s;
+}
+
+.big-btn:disabled { opacity: 0.35; cursor: default; }
+.big-btn:not(:disabled):active { transform: scale(0.98); }
+
+.btn-green {
+    flex: 1.5;
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(13, 148, 99, 0.3);
+}
+
+.privacy-hint {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-weak);
+}
+
+/* ---------- 진행 상태 ---------- */
+.progress-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 40px 24px;
+    text-align: center;
+    margin-top: 30px;
+}
+
+.progress-emoji { font-size: 36px; }
+
+#progress-status {
+    margin-top: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-sub);
+}
+
+.progress-track {
+    margin-top: 18px;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--bg);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 99px;
+    background: var(--green);
+    transition: width 0.25s;
+}
+
+/* ---------- 미리보기 ---------- */
+.preview-head { padding: 6px 4px 4px; }
+
+.preview-head h2 { font-size: 20px; font-weight: 800; }
+
+.preview-head p {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.6;
+}
+
+.preview-title-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin-top: 14px;
+}
+
+.preview-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-weak);
+    margin-bottom: 4px;
+}
+
+#p-title {
+    font-size: 18px;
+    font-weight: 800;
+    border-bottom: 1.5px dashed var(--line);
+    padding-bottom: 3px;
+}
+
+.preview-date-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-deep);
+}
+
+.preview-date-hint:empty { display: none; }

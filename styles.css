@@ -116,6 +116,36 @@ header {
     pointer-events: none;
 }
 
+/* 도구 전환 내비게이션 (좌석표 ↔ 일정 ↔ 이미지 변환) */
+.tool-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.tool-nav a {
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 99px;
+    padding: 0.5rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.tool-nav a:hover { color: var(--text-primary); border-color: var(--accent-color); }
+
+.tool-nav a.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
 .bus-selector {
     display: flex;
     gap: 1rem;
