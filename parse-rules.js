@@ -55,6 +55,12 @@ const PARSE_RULES = {
     // 안내문 시작 패턴 (* 로 시작하는 줄 → 이후 줄도 안내문으로 이어짐)
     noteStart: /^[*＊✱]+\s*(.*)$/,
 
+    // 식사 표기 규칙 (사용자 작성 습관): '점심'/'저녁' 뒤에 메뉴·상호명을 붙여 쓴다
+    // (예: "점심Kappa Sushi", "점심..Nikaho Tourist Base Center")
+    // → 다른 일정과 한 줄에 붙어 있으면 식사 표기부터 별도 항목으로 분리
+    mealSplit: /^(.*?\S)\s+((?:점심|저녁|조식|석식)\s*[.·:~-]*\s*\S.*)$/,
+    mealGlued: /(점심|저녁|조식|석식)(?=[A-Za-z0-9぀-ヿ一-鿿])/g,
+
     // 제목/본문 속 날짜 힌트 (예: "7월4(토)~9/야마가타", "2025.11.5 출발")
     dateHints: [
         { re: /(\d{4})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/, y: (m) => +m[1], mo: (m) => +m[2], d: (m) => +m[3] },
@@ -68,7 +74,8 @@ const PARSE_RULES = {
     categoryKeywords: [
         ['move', ['공항', '도착', '출발', '이동', '버스', '기차', '페리', '체크인', '픽업', '탑승', '항구']],
         ['spa',  ['온천', '찜질', '스파', '족욕', '노천탕', '온천욕']],
-        ['food', ['점심', '저녁', '조식', '석식', '중식', '식사', '맛집', '스시', 'sushi', '한상', '뷔페', '밥집']],
+        // '한상'은 넣지 말 것: '16나한상'(十六羅漢岩, 바위 불상군)이 식사로 오분류됨 (검색으로 확인)
+        ['food', ['점심', '저녁', '조식', '석식', '중식', '식사', '맛집', '스시', 'sushi', '뷔페', '밥집']],
         ['shop', ['쇼핑', '장보기', '마트', '시장', '아울렛', '기념품']],
         ['trek', ['트레킹', '등산', '하이킹', '트레일', '종주', '산행']],
         ['walk', ['산책', '숲길', '호숫길', '둘레길', '올레', '생태길', '야생화길', '꽃길', '습원', '습지', '마을길']],
@@ -78,6 +85,13 @@ const PARSE_RULES = {
 
     // '~길'로 끝나는 코스명은 산책으로 분류 (본격 산행은 '트레킹' 키워드가 먼저 잡음)
     walkSuffix: /길\s*(?:$|\/|~|\()/,
+
+    // 검색으로 확인한 복합 지명 — 인접 항목이 이 순서로 나오면 한 항목으로 병합
+    // (애매한 지명 경계는 웹 검색으로 실제 관계를 확인한 뒤 여기에 기록 — CLAUDE.md 참고)
+    compoundPlaces: [
+        // 야마가타 유자마치: 丸池様와 十六羅漢岩은 ~2km 거리의 세트 코스 (원문에서 한 줄)
+        ['마루이케', '16나한상'],
+    ],
 };
 
 // ---------- 사용자 교정 학습 (localStorage) ----------
@@ -152,6 +166,8 @@ function meaningfulCount(s) {
 // minRatio: 토큰 내 의미 문자 비율 하한 (제목처럼 날짜·기호가 많은 텍스트는 낮춰서 사용)
 function cleanNoise(text, minRatio = 0.5) {
     return String(text || '')
+        // 식사 표기가 쓰레기와 붙어 있으면 표기만 살림 (예: "점심..비310" → "점심" + 쓰레기)
+        .replace(/(점심|저녁|조식|석식)(?=[^\s가-힣])/g, '$1 ')
         .split(/\s+/)
         .filter((tok) => {
             // 완성형 한글 1~2자 토큰(반, 그, 후, 성 등)은 실제 단어일 가능성이 높으므로 보존
@@ -247,7 +263,8 @@ function parseScheduleText(raw, opts = {}) {
     const noteLines = [];
 
     function addItem(text) {
-        const clean = denoise(text.replace(/^[•·\-–—▪◦☐✔]+\s*/, ''));
+        const clean = denoise(text.replace(/^[•·\-–—▪◦☐✔]+\s*/, ''))
+            .replace(/[\s&+~·,/-]+$/, ''); // 끝에 매달린 연결 기호(&, + 등) 제거
         if (!clean || (noisy && meaningfulCount(clean) < 2)) return; // OCR 쓰레기만 남은 줄은 버림
         currentDay.items.push({ cat: classifyText(clean), text: clean });
     }
@@ -274,7 +291,16 @@ function parseScheduleText(raw, opts = {}) {
         // 3) 여는 대괄호가 유실된 숙소 줄, '숙박:' 표기
         const s3 = line.match(PARSE_RULES.stayBrokenOpen) || line.match(PARSE_RULES.stayKeyword);
         if (s3) { currentDay.stay = denoise(s3[1]) || s3[1].trim(); return; }
-        addItem(line);
+
+        // 식사 표기 규칙: '점심 OOO'가 다른 일정과 한 줄에 붙어 있으면 별도 항목으로 분리
+        const glued = line.replace(PARSE_RULES.mealGlued, '$1 ');
+        const meal = glued.match(PARSE_RULES.mealSplit);
+        if (meal && !/^(점심|저녁|조식|석식)/.test(meal[1])) {
+            addItem(meal[1]);
+            addItem(meal[2]);
+            return;
+        }
+        addItem(glued);
     }
 
     for (const line of lines) {
@@ -328,6 +354,26 @@ function parseScheduleText(raw, opts = {}) {
             addLine(l);
         });
     }
+
+    // 검색으로 확인된 복합 지명 병합 (예: '마루이케' + '16나한상' → 한 항목)
+    data.days.forEach((day) => {
+        for (let i = 0; i < day.items.length - 1; i++) {
+            for (const [a, b] of PARSE_RULES.compoundPlaces) {
+                if (day.items[i].text.trim() === a && day.items[i + 1].text.trim().startsWith(b)) {
+                    const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
+                    day.items.splice(i, 2, { cat: classifyText(merged), text: merged });
+                    break;
+                }
+            }
+        }
+        // 식사 마커만 남은 항목('점심')은 뒤따르는 메뉴·상호명 항목과 병합
+        for (let i = 0; i < day.items.length - 1; i++) {
+            if (/^(점심|저녁|조식|석식)$/.test(day.items[i].text.trim())) {
+                const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
+                day.items.splice(i, 2, { cat: 'food', text: merged });
+            }
+        }
+    });
 
     data.note = noteLines.filter(Boolean).join('\n');
     if (!data.title) data.title = '새 여행 일정';
