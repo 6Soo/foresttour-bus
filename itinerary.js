@@ -473,6 +473,18 @@ async function captureItineraryImage() {
     const hero = el.querySelector('.hero');
     // 제목·날짜가 모두 비어 있으면 (데일리 공지) 공유 이미지에서 히어로 제외
     const heroEmpty = !(state.title && state.title.trim()) && !state.startDate;
+
+    // 원데이 공지: 흰색 카드 영역만 캡처 (배경 여백·푸터 없이)
+    if (state.days.length === 1 && heroEmpty) {
+        const card = el.querySelector('.day-card');
+        const canvas = await window.html2canvas(card, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true,
+        });
+        return await canvasToBlob(canvas);
+    }
+
     el.classList.add('capturing');
     if (heroEmpty) hero.classList.add('capture-hide');
     try {
