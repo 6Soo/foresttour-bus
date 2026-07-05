@@ -470,7 +470,11 @@ function loadScript(src) {
 async function captureItineraryImage() {
     if (!window.html2canvas) await loadScript(HTML2CANVAS_CDN);
     const el = document.getElementById('main');
+    const hero = el.querySelector('.hero');
+    // 제목·날짜가 모두 비어 있으면 (데일리 공지) 공유 이미지에서 히어로 제외
+    const heroEmpty = !(state.title && state.title.trim()) && !state.startDate;
     el.classList.add('capturing');
+    if (heroEmpty) hero.classList.add('capture-hide');
     try {
         const canvas = await window.html2canvas(el, {
             backgroundColor: '#f2f4f6',
@@ -480,6 +484,7 @@ async function captureItineraryImage() {
         return await canvasToBlob(canvas);
     } finally {
         el.classList.remove('capturing');
+        hero.classList.remove('capture-hide');
     }
 }
 
