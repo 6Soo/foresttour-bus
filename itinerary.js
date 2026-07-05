@@ -80,6 +80,7 @@ function tripDurationLabel() {
 function tripDatesLabel() {
     const start = dayDate(0);
     if (!start) return '';
+    if (state.days.length === 1) return `${start.getFullYear()}.${fmtShort(start)}`; // 당일
     const end = dayDate(state.days.length - 1);
     return `${start.getFullYear()}.${fmtShort(start)} ~ ${fmtShort(end)}`;
 }
@@ -107,6 +108,7 @@ function renderHero() {
 
 function renderDays() {
     const wrap = document.getElementById('days');
+    const singleDay = state.days.length === 1; // 하루짜리는 DAY 헤더 없이 타임라인만
     wrap.innerHTML = state.days.map((day, d) => {
         const date = dayDate(d);
         const dateLabel = date ? `${fmtShort(date)} · ${DAY_NAMES[d] || `${d + 1}일차`}`
@@ -142,15 +144,18 @@ function renderDays() {
             </div>`
             : (editing ? `<button type="button" class="add-stay edit-only" data-d="${d}" data-act="add-stay">＋ 숙박 추가</button>` : '');
 
-        return `
-        <article class="day-card" data-d="${d}">
+        const dayHead = singleDay ? '' : `
             <div class="day-head">
                 <span class="day-chip">DAY ${d + 1}</span>
                 <span class="day-date">${escapeHtml(dateLabel)}</span>
                 ${editing
                     ? `<button type="button" class="day-del" data-act="day-del" data-d="${d}">삭제</button>`
                     : `<button type="button" class="day-share" data-act="day-share" data-d="${d}">📤 공유</button>`}
-            </div>
+            </div>`;
+
+        return `
+        <article class="day-card" data-d="${d}">
+            ${dayHead}
             <div class="timeline">${itemsHtml || (editing ? '' : '<p style="color:var(--text-weak);font-size:14px;">일정이 없습니다</p>')}</div>
             ${editing ? `<button type="button" class="add-item edit-only" data-d="${d}" data-act="add-item">＋ 일정 추가</button>` : ''}
             ${stayHtml}
@@ -398,13 +403,16 @@ function buildShareText() {
     lines.push('');
     lines.push('━━━━━━━━━━━━━━');
 
+    const singleDay = state.days.length === 1;
     state.days.forEach((day, d) => {
         const date = dayDate(d);
-        const head = date
-            ? `<${DAY_NAMES[d] || `${d + 1}일차`}> ${fmtShort(date)}`
-            : `<${DAY_NAMES[d] || `${d + 1}일차`}>`;
         lines.push('');
-        lines.push(`📅 ${head}`);
+        if (!singleDay) {
+            const head = date
+                ? `<${DAY_NAMES[d] || `${d + 1}일차`}> ${fmtShort(date)}`
+                : `<${DAY_NAMES[d] || `${d + 1}일차`}>`;
+            lines.push(`📅 ${head}`);
+        }
         day.items.forEach((item) => {
             const cat = CATS[item.cat] || CATS.spot;
             lines.push(`  ${cat.emoji} ${item.text}`);
