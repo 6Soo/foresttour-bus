@@ -58,6 +58,9 @@ const PARSE_RULES = {
     // 시간만 있는 줄 (대장 작성 습관: 시간대를 윗줄에, 일정을 아랫줄에 씀)
     // 예: "9시15분~9시30분", "1시15~3시", "11시~11시30분" → 다음 줄과 병합
     timeOnlyLine: /^\s*\d{1,2}\s*[시:]\s*(?:\d{1,2}\s*분?)?\s*(?:[~\-]\s*\d{1,2}\s*[시:]?\s*(?:\d{1,2}\s*분?)?)?\s*$/,
+    // 항목 맨 앞의 시간 표기 — 시간(윗줄)/일정(아랫줄) 두 줄로 표시하기 위해 분리
+    // 예: "9시15분~9시30분 점심 도시락 구입" → time: "9시15분~9시30분", text: "점심 도시락 구입"
+    leadTime: /^(\d{1,2}\s*[시:]\s*(?:\d{1,2}\s*분?)?\s*(?:[~\-]\s*\d{1,2}\s*[시:]?\s*(?:\d{1,2}\s*분?)?)?)\s+(\S.*)$/,
 
     // 식사 표기 규칙 (사용자 작성 습관): '점심'/'저녁' 뒤에 메뉴·상호명을 붙여 쓴다
     // (예: "점심Kappa Sushi", "점심..Nikaho Tourist Base Center")
@@ -309,6 +312,12 @@ function parseScheduleText(raw, opts = {}) {
         const clean = denoise(text.replace(/^[•·\-–—▪◦☐✔]+\s*/, ''))
             .replace(/[\s&+~·,/-]+$/, ''); // 끝에 매달린 연결 기호(&, + 등) 제거
         if (!clean || (noisy && meaningfulCount(clean) < 2)) return; // OCR 쓰레기만 남은 줄은 버림
+        // 맨 앞의 시간 표기는 별도 필드로 분리 → 카드에서 시간/일정 두 줄로 표시
+        const t = clean.match(PARSE_RULES.leadTime);
+        if (t) {
+            currentDay.items.push({ cat: classifyText(t[2]), text: t[2], time: t[1].replace(/\s+/g, '') });
+            return;
+        }
         currentDay.items.push({ cat: classifyText(clean), text: clean });
     }
 
@@ -425,7 +434,9 @@ function parseScheduleText(raw, opts = {}) {
             for (const [a, b] of PARSE_RULES.compoundPlaces) {
                 if (day.items[i].text.trim() === a && day.items[i + 1].text.trim().startsWith(b)) {
                     const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
-                    day.items.splice(i, 2, { cat: classifyText(merged), text: merged });
+                    const item = { cat: classifyText(merged), text: merged };
+                    if (day.items[i].time) item.time = day.items[i].time;
+                    day.items.splice(i, 2, item);
                     break;
                 }
             }
@@ -436,7 +447,9 @@ function parseScheduleText(raw, opts = {}) {
             if (/^(점심|저녁|조식|석식)$/.test(day.items[i].text.trim())) {
                 if (classifyText(day.items[i + 1].text) !== 'food') continue;
                 const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
-                day.items.splice(i, 2, { cat: 'food', text: merged });
+                const item = { cat: 'food', text: merged };
+                if (day.items[i].time) item.time = day.items[i].time;
+                day.items.splice(i, 2, item);
             }
         }
     });

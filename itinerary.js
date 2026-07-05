@@ -115,6 +115,7 @@ function renderDays() {
                 <button class="cat-badge" type="button" style="background:${cat.bg}" data-act="cat" ${editing ? '' : 'tabindex="-1"'} aria-label="일정 종류 변경">${cat.emoji}</button>
                 <div class="item-body">
                     <div class="item-cat-label" style="color:${cat.color}">${cat.label}</div>
+                    ${item.time || editing ? `<div class="item-time" data-field="item-time" ${editing ? 'contenteditable="plaintext-only"' : ''} data-placeholder="시간 (선택)">${escapeHtml(item.time || '')}</div>` : ''}
                     <div class="item-text" data-field="item-text" ${editing ? 'contenteditable="plaintext-only"' : ''} data-placeholder="일정을 입력하세요">${escapeHtml(item.text)}</div>
                 </div>
                 <div class="row-actions">
@@ -189,6 +190,7 @@ editToggle.addEventListener('click', () => {
         // 완료 시 빈 항목 정리
         state.days.forEach((day) => {
             day.items = day.items.filter((it) => it.text.trim() !== '');
+            day.items.forEach((it) => { if (!String(it.time || '').trim()) delete it.time; });
         });
         save();
         toast('저장되었습니다 ✅');
@@ -207,6 +209,10 @@ document.getElementById('main').addEventListener('input', (e) => {
     if (field === 'item-text') {
         const row = t.closest('.item-row');
         state.days[+row.dataset.d].items[+row.dataset.i].text = t.textContent;
+        save();
+    } else if (field === 'item-time') {
+        const row = t.closest('.item-row');
+        state.days[+row.dataset.d].items[+row.dataset.i].time = t.textContent.trim();
         save();
     } else if (field === 'stay-text') {
         const block = t.closest('.stay-block');
@@ -235,6 +241,9 @@ document.getElementById('main').addEventListener('keydown', (e) => {
         save();
         render();
         focusItem(d, i + 1);
+    } else if (t.getAttribute('data-field') === 'item-time') {
+        e.preventDefault();
+        t.closest('.item-row')?.querySelector('.item-text')?.focus();
     } else if (t.getAttribute('data-field') === 'stay-text' || t.id === 'trip-title') {
         e.preventDefault();
         t.blur();
@@ -428,7 +437,13 @@ function buildShareText() {
         }
         day.items.forEach((item) => {
             const cat = CATS[item.cat] || CATS.spot;
-            lines.push(`  ${cat.emoji} ${item.text}`);
+            // 시간이 있으면 시간 줄 + 일정 줄 두 줄로
+            if (item.time && item.time.trim()) {
+                lines.push(`  ${cat.emoji} ${item.time.trim()}`);
+                lines.push(`      ${item.text}`);
+            } else {
+                lines.push(`  ${cat.emoji} ${item.text}`);
+            }
         });
         if (day.stay && day.stay.trim()) {
             lines.push(`  🏨 [숙박] ${day.stay.trim()}`);

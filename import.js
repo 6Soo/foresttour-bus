@@ -124,6 +124,7 @@ function renderPreview() {
                 <button class="cat-badge" type="button" style="background:${cat.bg}" data-act="cat" aria-label="일정 종류 변경">${cat.emoji}</button>
                 <div class="item-body">
                     <div class="item-cat-label" style="color:${cat.color}">${cat.label}</div>
+                    ${item.time ? `<div class="item-time" data-field="item-time" contenteditable="plaintext-only">${escapeHtml(item.time)}</div>` : ''}
                     <div class="item-text" data-field="item-text" contenteditable="plaintext-only" data-placeholder="일정 내용">${escapeHtml(item.text)}</div>
                 </div>
                 <div class="row-actions">
@@ -170,6 +171,9 @@ $('step-preview').addEventListener('input', (e) => {
     if (field === 'item-text') {
         const row = t.closest('.item-row');
         parsed.days[+row.dataset.d].items[+row.dataset.i].text = t.textContent;
+    } else if (field === 'item-time') {
+        const row = t.closest('.item-row');
+        parsed.days[+row.dataset.d].items[+row.dataset.i].time = t.textContent.trim();
     } else if (field === 'stay-text') {
         const block = t.closest('.stay-block');
         parsed.days[+block.dataset.d].stay = t.textContent;
@@ -261,6 +265,7 @@ $('open-btn').addEventListener('click', () => {
     if (!parsed) return;
     parsed.days.forEach((day) => {
         day.items = day.items.filter((it) => it.text.trim() !== '');
+        day.items.forEach((it) => { if (!String(it.time || '').trim()) delete it.time; });
     });
     window.location.href = `itinerary.html#d=${encodeData(parsed)}`;
 });
