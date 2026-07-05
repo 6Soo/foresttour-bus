@@ -146,12 +146,15 @@ function renderPreview() {
             </div>`
             : '';
 
-        return `
-        <article class="day-card" data-d="${d}">
+        const dayHead = parsed.days.length === 1 ? '' : `
             <div class="day-head">
                 <span class="day-chip">DAY ${d + 1}</span>
                 <button type="button" class="day-del" data-act="day-del" data-d="${d}">삭제</button>
-            </div>
+            </div>`;
+
+        return `
+        <article class="day-card" data-d="${d}">
+            ${dayHead}
             <div class="timeline">${itemsHtml}</div>
             ${stayHtml}
         </article>`;
