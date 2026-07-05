@@ -558,10 +558,17 @@ body.editing .note-body {
     margin-top: 28px;
 }
 
-/* 이미지 캡처 중: 하단 버튼용 여백 제거 */
+/* 이미지 캡처 중: 하단 버튼용 여백 제거, placeholder 안내 문구는 이미지에 찍지 않음 */
 main.capturing {
     padding-bottom: 24px;
 }
+
+main.capturing [contenteditable]:empty::before,
+main.capturing [data-placeholder]:empty::before {
+    content: none;
+}
+
+.capture-hide { display: none !important; }
 
 /* ---------- 하단 액션 바 ---------- */
 .action-bar {
