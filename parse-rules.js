@@ -430,7 +430,7 @@ function parseScheduleText(raw, opts = {}) {
     });
 
     data.note = noteLines.filter(Boolean).join('\n');
-    if (!data.title) data.title = '새 여행 일정';
+    // 제목을 못 찾으면 빈 값 — 옛 제목이 남지 않도록 페이지에서 placeholder로 입력받음
     return data;
 }
 

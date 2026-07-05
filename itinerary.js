@@ -11,45 +11,13 @@ const STORAGE_KEY = 'foresttour-itinerary-v1';
 const DAY_NAMES = ['첫째 날', '둘째 날', '셋째 날', '넷째 날', '다섯째 날', '여섯째 날', '일곱째 날', '여덟째 날', '아홉째 날', '열째 날'];
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-// ---------- 기본 예시 데이터 ----------
+// ---------- 초기 데이터 (빈 일정) ----------
 function defaultData() {
     return {
-        title: '화순 · 담양 · 지리산 힐링여행',
-        startDate: '2025-11-05',
-        note: '숙소 사정에 따라 일정 순서는 일부 변경될 수 있습니다.\n편한 트레킹화와 따뜻한 겉옷을 준비해 주세요.',
-        days: [
-            {
-                items: [
-                    { cat: 'tour', text: '화순적벽 투어 (예약)' },
-                ],
-                stay: '화순온천리조트 + 조식',
-            },
-            {
-                items: [
-                    { cat: 'walk', text: '가사문학길 (소쇄원~취가정~환벽당~식영정)' },
-                    { cat: 'spot', text: '날씨 더우면 광주호 호숫길' },
-                    { cat: 'tour', text: '명옥헌원림 배롱나무' },
-                    { cat: 'tour', text: '창평 슬로시티마을길' },
-                    { cat: 'walk', text: '담양 죽녹원 / 메타세콰이어길' },
-                ],
-                stay: '지리산운봉고원 O호텔 + 조식',
-            },
-            {
-                items: [
-                    { cat: 'tour', text: '지리산허브밸리 / 박초월생가마을' },
-                    { cat: 'walk', text: '장수 방화동생태길' },
-                    { cat: 'walk', text: '산림치유원 힐링산책 (1)' },
-                ],
-                stay: '진안고원 산림치유원 + 석식 + 조식 (2025.11.6 정식 개원!)',
-            },
-            {
-                items: [
-                    { cat: 'walk', text: '산림치유원 힐링산책 (2)' },
-                    { cat: 'trek', text: '마이산 남부~북부 트레킹 (A/B)' },
-                ],
-                stay: '',
-            },
-        ],
+        title: '',
+        startDate: '',
+        note: '',
+        days: [{ items: [], stay: '' }],
     };
 }
 
@@ -410,10 +378,7 @@ document.getElementById('paste-run').addEventListener('click', () => {
     const hasContent = state.days.some((d) => d.items.length || (d.stay && d.stay.trim()));
     if (hasContent && !confirm('현재 일정을 새 일정으로 바꿀까요?')) return;
 
-    // 날짜/제목이 텍스트에 없으면 기존 값을 유지
-    if (!parsed.startDate && state.startDate) parsed.startDate = state.startDate;
-    if (parsed.title === '새 여행 일정' && state.title) parsed.title = state.title;
-
+    // 옛 제목·날짜를 끌고 오지 않음 — 텍스트에서 찾은 것만 사용 (없으면 편집에서 입력)
     state = parsed;
     save();
     render();
