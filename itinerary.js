@@ -4,8 +4,6 @@
 
 const HTML2CANVAS_CDN = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
 
-const STORAGE_KEY = 'foresttour-itinerary-v1';
-
 // 카테고리 정의(CATS)와 공유 링크 인코딩은 parse-rules.js에서 로드됩니다.
 
 const DAY_NAMES = ['첫째 날', '둘째 날', '셋째 날', '넷째 날', '다섯째 날', '여섯째 날', '일곱째 날', '여덟째 날', '아홉째 날', '열째 날'];
@@ -27,7 +25,8 @@ let editing = false;
 let sheetTarget = null; // { d, i }
 
 function loadInitial() {
-    // 1) 공유 링크의 데이터 우선
+    // 공유 링크(#d=)로 열었을 때만 일정을 불러오고,
+    // 그 외에는 항상 빈 랜딩부터 시작 (이전 일정 복원 없음 — 헷갈림 방지)
     const hash = window.location.hash;
     if (hash.startsWith('#d=')) {
         try {
@@ -38,19 +37,10 @@ function loadInitial() {
             }
         } catch (e) { /* 잘못된 링크면 무시 */ }
     }
-    // 2) 저장된 데이터
-    try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (saved && Array.isArray(saved.days)) return saved;
-    } catch (e) { /* 손상된 데이터면 무시 */ }
-    // 3) 예시 데이터
     return defaultData();
 }
 
 function save() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) { /* 저장 공간 부족 등은 무시 */ }
     // 공유 링크로 열었다가 수정한 경우, 해시의 옛 데이터가
     // 새로고침 시 수정 내용을 덮어쓰지 않도록 해시를 제거
     if (window.location.hash.startsWith('#d=')) {
