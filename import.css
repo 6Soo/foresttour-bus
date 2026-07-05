@@ -134,24 +134,6 @@
 #text-input:focus { outline: 2px solid var(--green); }
 
 /* ---------- 버튼 ---------- */
-.big-btn {
-    width: 100%;
-    margin-top: 14px;
-    border: none;
-    border-radius: 16px;
-    background: var(--green);
-    color: #fff;
-    font-family: inherit;
-    font-size: 15.5px;
-    font-weight: 800;
-    padding: 16px;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.15s;
-}
-
-.big-btn:disabled { opacity: 0.35; cursor: default; }
-.big-btn:not(:disabled):active { transform: scale(0.98); }
-
 .btn-green {
     flex: 1.5;
     background: var(--green);
@@ -243,3 +225,9 @@
 }
 
 .preview-date-hint:empty { display: none; }
+
+.inline-link {
+    color: var(--green-deep);
+    font-weight: 700;
+    text-decoration: none;
+}

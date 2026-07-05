@@ -8,12 +8,13 @@
 | 파일 | 역할 |
 |---|---|
 | `index.html` + `script.js` + `styles.css` | 버스 좌석표 도구 (기존) |
-| `itinerary.html` + `itinerary.js` + `itinerary.css` | 여행 일정 직접 입력·공유 페이지 (토스 스타일 모바일 UI) |
-| `import.html` + `import.js` + `import.css` | 이미지(OCR)·텍스트 → 일정 자동 변환 도구 |
+| `itinerary.html` + `itinerary.js` + `itinerary.css` | **텍스트로 일정**: 텍스트 붙여넣기 → 자동 분류 + 직접 편집·공유 (토스 스타일 모바일 UI) |
+| `import.html` + `import.js` + `import.css` | **이미지로 일정**: 이미지(OCR) → 일정 자동 변환 도구 |
 | `parse-rules.js` | **두 일정 페이지가 공유**하는 카테고리 정의(`CATS`)와 파싱 규칙(`PARSE_RULES`) |
 
 - 일정 데이터는 URL 해시(`#d=base64`)로 공유되고 localStorage(`foresttour-itinerary-v1`)에 자동 저장됩니다.
 - import 페이지의 결과는 `itinerary.html#d=...` 로 넘겨서 열립니다.
+- 텍스트 붙여넣기는 itinerary 페이지의 시트에서 처리 — **이미지 파이프라인에서 OCR만 생략**한 동일 흐름(`parseScheduleText`, `{ocr:false}`).
 - 버스 페이지와 일정 페이지는 디자인 통일성을 유지할 필요가 없습니다.
 
 ## ⭐ 일정 이미지 학습 워크플로 (중요)
@@ -122,7 +123,11 @@ import 미리보기에서 사용자가 분류를 고치면 `localStorage('forest
    Playwright에서 `page.route('https://cdn.jsdelivr.net/**')`로 CDN을 로컬 npm 파일
    (`tesseract.js`, `tesseract.js-core`, `@tesseract.js-data/kor|eng`)로 라우팅하면
    이 환경에서도 업로드→OCR→미리보기 전체 흐름이 돌아간다. 텍스트 주입 테스트만으로 끝내지 말 것.
-3. main 병합 후 Pages 배포가 `success`인지 확인 (일시 오류로 `failure`가 나면 재트리거 필요).
+3. main 병합 후 Pages 배포가 `success`인지 확인. 일시 오류(`Deployment failed, try again later`)로
+   `failure`가 나면 **Actions API 재실행(rerun)을 쓰지 말 것** — 이 dynamic 워크플로는 재실행이
+   영원히 `queued` 상태로 남아 취소도 안 되고, 나중에 실패 메일만 발송한다 (실제 사고 3건).
+   대신 다음 실제 변경 커밋을 병합해서 새 배포를 트리거한다. 문서만 바뀐 경우에는
+   즉시 병합하지 말고 다음 기능 변경에 함께 실어 불필요한 배포(=실패 메일 위험)를 줄인다.
 
 ## 주의
 

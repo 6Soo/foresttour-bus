@@ -15,8 +15,8 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="itinerary.css?v=20260704l">
-    <link rel="stylesheet" href="import.css?v=20260704l">
+    <link rel="stylesheet" href="itinerary.css?v=20260704m">
+    <link rel="stylesheet" href="import.css?v=20260704m">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
 <body class="editing">
@@ -30,7 +30,7 @@
 
         <nav class="tool-nav">
             <a href="index.html">🚌 버스 좌석표</a>
-            <a href="itinerary.html">📅 여행 일정</a>
+            <a href="itinerary.html">📝 텍스트로 일정</a>
             <a href="import.html" class="active">📷 이미지로 일정</a>
         </nav>
 
@@ -39,13 +39,8 @@
             <section id="step-input">
                 <div class="intro">
                     <h1>📷 이미지로 일정 만들기</h1>
-                    <p>카페에 올리던 일정 이미지나 텍스트를 넣으면<br>자동으로 분류해서 일정표를 만들어 드려요.</p>
+                    <p>카페에 올리던 일정 이미지(캡처)를 올리면<br>자동으로 분류해서 일정표를 만들어 드려요.<br>텍스트는 <a href="itinerary.html" class="inline-link">📝 텍스트로 일정</a>에 붙여넣어 주세요.</p>
                 </div>
-
-                <nav class="tabs">
-                    <button class="tab active" data-tab="image" type="button">🖼️ 이미지 올리기</button>
-                    <button class="tab" data-tab="text" type="button">📝 텍스트 붙여넣기</button>
-                </nav>
 
                 <section id="pane-image" class="pane">
                     <label class="dropzone" for="file-input">
@@ -59,15 +54,6 @@
                     <p class="privacy-hint">🔒 글자 인식은 휴대폰 안에서만 처리되고, 이미지는 어디에도 업로드되지 않아요.</p>
                 </section>
 
-                <section id="pane-text" class="pane" hidden>
-                    <textarea id="text-input" rows="10" placeholder="첫날..화순적벽 투어(예약)
-        [숙박- 화순온천리조트+조식]
-
-둘쨋날..가사문학길
-        담양 죽녹원/메타세콰이어길
-        ..."></textarea>
-                    <button id="analyze-text" class="big-btn" type="button">텍스트 분석하기</button>
-                </section>
             </section>
 
             <!-- 2단계: 분석 중 -->
@@ -114,7 +100,7 @@
 
     <div id="toast" class="toast" hidden></div>
 
-    <script src="parse-rules.js?v=20260704l"></script>
-    <script src="import.js?v=20260704l"></script>
+    <script src="parse-rules.js?v=20260704m"></script>
+    <script src="import.js?v=20260704m"></script>
 </body>
 </html>
