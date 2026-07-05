@@ -55,6 +55,10 @@ const PARSE_RULES = {
     // 안내문 시작 패턴 (* 로 시작하는 줄 → 이후 줄도 안내문으로 이어짐)
     noteStart: /^[*＊✱]+\s*(.*)$/,
 
+    // 시간만 있는 줄 (대장 작성 습관: 시간대를 윗줄에, 일정을 아랫줄에 씀)
+    // 예: "9시15분~9시30분", "1시15~3시", "11시~11시30분" → 다음 줄과 병합
+    timeOnlyLine: /^\s*\d{1,2}\s*[시:]\s*(?:\d{1,2}\s*분?)?\s*(?:[~\-]\s*\d{1,2}\s*[시:]?\s*(?:\d{1,2}\s*분?)?)?\s*$/,
+
     // 식사 표기 규칙 (사용자 작성 습관): '점심'/'저녁' 뒤에 메뉴·상호명을 붙여 쓴다
     // (예: "점심Kappa Sushi", "점심..Nikaho Tourist Base Center")
     // → 다른 일정과 한 줄에 붙어 있으면 식사 표기부터 별도 항목으로 분리
@@ -289,6 +293,13 @@ function parseScheduleText(raw, opts = {}) {
     });
     flush();
 
+    // 2) 시간만 있는 줄은 다음 줄(일정 내용)과 병합 — "9시15분~9시30분" + "점심 도시락 구입"
+    for (let i = 0; i < lines.length - 1; i++) {
+        if (PARSE_RULES.timeOnlyLine.test(lines[i]) && !isDayHeaderLine(lines[i + 1])) {
+            lines.splice(i, 2, `${lines[i].trim()} ${lines[i + 1]}`);
+        }
+    }
+
     const data = { title: '', startDate: '', note: '', days: [] };
     let currentDay = null;
     let noteMode = false;
@@ -327,7 +338,8 @@ function parseScheduleText(raw, opts = {}) {
         // 식사 표기 규칙: '점심 OOO'가 다른 일정과 한 줄에 붙어 있으면 별도 항목으로 분리
         const glued = line.replace(PARSE_RULES.mealGlued, '$1 ');
         const meal = glued.match(PARSE_RULES.mealSplit);
-        if (meal && !/^(점심|저녁|조식|석식)/.test(meal[1])) {
+        // 앞부분이 시간 표기뿐이면 분리하지 않음 ("9시~9시30분 점심 도시락 구입"은 한 항목)
+        if (meal && !/^(점심|저녁|조식|석식)/.test(meal[1]) && !PARSE_RULES.timeOnlyLine.test(meal[1])) {
             addItem(meal[1]);
             addMealItem(meal[2]);
             return;
