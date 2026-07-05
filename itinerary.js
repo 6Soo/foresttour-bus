@@ -93,6 +93,10 @@ function escapeHtml(s) {
 }
 
 function renderHero() {
+    // 제목·날짜가 모두 비어 있으면(데일리 공지) 보기 화면에서 히어로 숨김 — 편집 때만 표시
+    const heroEmpty = !(state.title && state.title.trim()) && !state.startDate;
+    document.querySelector('.hero').classList.toggle('hidden-view', heroEmpty && !editing);
+
     const titleEl = document.getElementById('trip-title');
     if (titleEl.textContent !== state.title) titleEl.textContent = state.title;
 
