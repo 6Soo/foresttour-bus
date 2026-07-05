@@ -396,7 +396,7 @@ function parseScheduleText(raw, opts = {}) {
     }
 
     // 일차 구분을 하나도 못 찾았으면 전체를 1일차로
-    // (가이드 데일리 공지처럼 제목 없는 텍스트 — 첫 줄도 제목이 아니라 항목으로 취급)
+    // (대장 데일리 공지처럼 제목 없는 텍스트 — 첫 줄도 제목이 아니라 항목으로 취급)
     if (data.days.length === 0) {
         data.title = '';
         currentDay = { items: [], stay: '' };
