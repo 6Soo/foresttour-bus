@@ -370,13 +370,58 @@ function closeSheet() {
     setTimeout(() => { sheet.hidden = true; backdrop.hidden = true; }, 250);
 }
 
-backdrop.addEventListener('click', closeSheet);
+backdrop.addEventListener('click', () => { closeSheet(); closePasteSheet(); });
 document.getElementById('cat-list').addEventListener('click', (e) => {
     const opt = e.target.closest('.cat-option');
     if (!opt || !sheetTarget) return;
     state.days[sheetTarget.d].items[sheetTarget.i].cat = opt.dataset.cat;
     save(); render();
     closeSheet();
+});
+
+// ---------- 텍스트 붙여넣기 → 일정 만들기 ----------
+// (이미지로 일정과 같은 파이프라인에서 OCR만 생략한 흐름)
+const pasteSheet = document.getElementById('paste-sheet');
+
+document.getElementById('paste-open').addEventListener('click', () => {
+    if (editing) editToggle.click();
+    pasteSheet.hidden = false;
+    backdrop.hidden = false;
+    requestAnimationFrame(() => {
+        pasteSheet.classList.add('show');
+        backdrop.classList.add('show');
+        document.getElementById('paste-input').focus();
+    });
+});
+
+function closePasteSheet() {
+    if (pasteSheet.hidden) return;
+    pasteSheet.classList.remove('show');
+    setTimeout(() => { pasteSheet.hidden = true; }, 250);
+}
+
+document.getElementById('paste-run').addEventListener('click', () => {
+    const text = document.getElementById('paste-input').value.trim();
+    if (!text) { toast('일정 텍스트를 붙여넣어 주세요'); return; }
+    const parsed = parseScheduleText(text);
+    const total = parsed.days.reduce((n, d) => n + d.items.length, 0) + parsed.days.filter((d) => d.stay).length;
+    if (total === 0) { toast('일정을 찾지 못했어요 🥲'); return; }
+
+    const hasContent = state.days.some((d) => d.items.length || (d.stay && d.stay.trim()));
+    if (hasContent && !confirm('현재 일정을 새 일정으로 바꿀까요?')) return;
+
+    // 날짜/제목이 텍스트에 없으면 기존 값을 유지
+    if (!parsed.startDate && state.startDate) parsed.startDate = state.startDate;
+    if (parsed.title === '새 여행 일정' && state.title) parsed.title = state.title;
+
+    state = parsed;
+    save();
+    render();
+    document.getElementById('paste-input').value = '';
+    closePasteSheet();
+    backdrop.classList.remove('show');
+    setTimeout(() => { backdrop.hidden = true; }, 250);
+    toast(`일정 ${total}개를 만들었어요 ✨ 편집에서 다듬을 수 있어요`);
 });
 
 // ---------- 공유용 텍스트 생성 ----------

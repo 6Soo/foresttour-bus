@@ -8,12 +8,13 @@
 | 파일 | 역할 |
 |---|---|
 | `index.html` + `script.js` + `styles.css` | 버스 좌석표 도구 (기존) |
-| `itinerary.html` + `itinerary.js` + `itinerary.css` | 여행 일정 직접 입력·공유 페이지 (토스 스타일 모바일 UI) |
-| `import.html` + `import.js` + `import.css` | 이미지(OCR)·텍스트 → 일정 자동 변환 도구 |
+| `itinerary.html` + `itinerary.js` + `itinerary.css` | **텍스트로 일정**: 텍스트 붙여넣기 → 자동 분류 + 직접 편집·공유 (토스 스타일 모바일 UI) |
+| `import.html` + `import.js` + `import.css` | **이미지로 일정**: 이미지(OCR) → 일정 자동 변환 도구 |
 | `parse-rules.js` | **두 일정 페이지가 공유**하는 카테고리 정의(`CATS`)와 파싱 규칙(`PARSE_RULES`) |
 
 - 일정 데이터는 URL 해시(`#d=base64`)로 공유되고 localStorage(`foresttour-itinerary-v1`)에 자동 저장됩니다.
 - import 페이지의 결과는 `itinerary.html#d=...` 로 넘겨서 열립니다.
+- 텍스트 붙여넣기는 itinerary 페이지의 시트에서 처리 — **이미지 파이프라인에서 OCR만 생략**한 동일 흐름(`parseScheduleText`, `{ocr:false}`).
 - 버스 페이지와 일정 페이지는 디자인 통일성을 유지할 필요가 없습니다.
 
 ## ⭐ 일정 이미지 학습 워크플로 (중요)

@@ -72,7 +72,7 @@ const PARSE_RULES = {
     // 트레킹(본격 산행)이 산책(가벼운 걷기)보다 먼저 ('야생화길 트레킹'은 트레킹),
     // 트레킹이 휴식보다 먼저 ('트레킹(자유 선택)' 같은 문구 때문)
     categoryKeywords: [
-        ['move', ['공항', '도착', '출발', '이동', '버스', '기차', '페리', '체크인', '픽업', '탑승', '항구']],
+        ['move', ['공항', '도착', '출발', '이동', '버스', '기차', '페리', '체크인', '체크아웃', '픽업', '탑승', '항구']],
         ['spa',  ['온천', '찜질', '스파', '족욕', '노천탕', '온천욕']],
         // '한상'은 넣지 말 것: '16나한상'(十六羅漢岩, 바위 불상군)이 식사로 오분류됨 (검색으로 확인)
         ['food', ['점심', '저녁', '조식', '석식', '중식', '식사', '맛집', '스시', 'sushi', '뷔페', '밥집']],
@@ -396,12 +396,13 @@ function parseScheduleText(raw, opts = {}) {
     }
 
     // 일차 구분을 하나도 못 찾았으면 전체를 1일차로
+    // (가이드 데일리 공지처럼 제목 없는 텍스트 — 첫 줄도 제목이 아니라 항목으로 취급)
     if (data.days.length === 0) {
+        data.title = '';
         currentDay = { items: [], stay: '' };
         data.days.push(currentDay);
         lines.forEach((l) => {
             if (PARSE_RULES.skipLines.some((re) => re.test(l))) return;
-            if (data.title && l.replace(/^[\[【]|[\]】]$/g, '').trim() === data.title) return;
             addLine(l);
         });
     }
@@ -417,12 +418,11 @@ function parseScheduleText(raw, opts = {}) {
                 }
             }
         }
-        // 식사 마커만 남은 항목('점심')은 뒤따르는 메뉴·상호명 항목과 병합
-        // 단, 뒤 항목이 검색으로 확인된 비식사 장소면 메뉴가 생략된 것이므로 합치지 않음
+        // 식사 마커만 남은 항목('점심')은 뒤 항목이 식사(메뉴·상호명)로 분류될 때만 병합
+        // — '점심' 뒤 메뉴는 생략될 수 있으므로, 뒤가 장소·코스면 그대로 둔다
         for (let i = 0; i < day.items.length - 1; i++) {
             if (/^(점심|저녁|조식|석식)$/.test(day.items[i].text.trim())) {
-                const placeCat = lookupKnownPlace(day.items[i + 1].text);
-                if (placeCat && placeCat !== 'food') continue;
+                if (classifyText(day.items[i + 1].text) !== 'food') continue;
                 const merged = `${day.items[i].text.trim()} ${day.items[i + 1].text.trim()}`;
                 day.items.splice(i, 2, { cat: 'food', text: merged });
             }

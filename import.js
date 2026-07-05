@@ -1,6 +1,6 @@
 /* ============================================
    숲길따라 감성여행 · 이미지로 일정 만들기
-   - 이미지(OCR) 또는 텍스트 → parse-rules.js 규칙으로 분류
+   - 이미지(OCR) → parse-rules.js 규칙으로 분류 (텍스트는 itinerary.html의 붙여넣기)
    - 미리보기에서 고친 분류는 localStorage에 저장되어 재사용(학습)
    ============================================ */
 
@@ -11,15 +11,6 @@ let parsed = null;
 let sheetTarget = null; // { d, i }
 
 const $ = (id) => document.getElementById(id);
-
-// ---------- 탭 전환 ----------
-document.querySelectorAll('.tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
-        $('pane-image').hidden = tab.dataset.tab !== 'image';
-        $('pane-text').hidden = tab.dataset.tab !== 'text';
-    });
-});
 
 // ---------- 이미지 선택 ----------
 $('file-input').addEventListener('change', (e) => {
@@ -96,15 +87,8 @@ $('analyze-image').addEventListener('click', async () => {
         finishAnalyze(fullText, { ocr: true });
     } catch (err) {
         showStep('input');
-        toast('이미지 인식에 실패했어요. 텍스트 붙여넣기를 이용해 보세요 🙏');
+        toast('이미지 인식에 실패했어요. 텍스트로 일정 메뉴를 이용해 보세요 🙏');
     }
-});
-
-// ---------- 텍스트 분석 ----------
-$('analyze-text').addEventListener('click', () => {
-    const text = $('text-input').value.trim();
-    if (!text) { toast('일정 텍스트를 붙여넣어 주세요'); return; }
-    finishAnalyze(text);
 });
 
 function finishAnalyze(text, opts) {
