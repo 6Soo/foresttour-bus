@@ -142,7 +142,15 @@ body.empty #landing {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 13vh 12px 40px;
+    padding: 5vh 4px 40px;
+}
+
+#landing .paste-area {
+    margin-top: 24px;
+    background: var(--card);
+    border: none;
+    box-shadow: var(--shadow);
+    text-align: left;
 }
 
 /* 빈 상태에서는 랜딩만 — 편집기·공유 UI 전부 숨김 */
@@ -745,7 +753,7 @@ main.capturing [data-placeholder]:empty::before {
 .cat-option .emoji { font-size: 22px; }
 .cat-option .label { font-size: 12.5px; font-weight: 700; color: var(--text-sub); }
 
-/* ---------- 텍스트 붙여넣기 시트 ---------- */
+/* ---------- 텍스트 붙여넣기 (랜딩·시트 공용) ---------- */
 .sheet-desc {
     font-size: 13.5px;
     color: var(--text-sub);
@@ -753,7 +761,7 @@ main.capturing [data-placeholder]:empty::before {
     margin: -6px 0 12px;
 }
 
-#paste-input {
+.paste-area {
     width: 100%;
     border: 1.5px solid var(--line);
     border-radius: 14px;
@@ -768,7 +776,7 @@ main.capturing [data-placeholder]:empty::before {
     box-sizing: border-box;
 }
 
-#paste-input:focus { outline: 2px solid var(--green); }
+.paste-area:focus { outline: 2px solid var(--green); }
 
 .big-btn {
     width: 100%;

@@ -374,7 +374,6 @@ function openPasteSheet() {
 }
 
 document.getElementById('paste-open').addEventListener('click', openPasteSheet);
-document.getElementById('landing-paste').addEventListener('click', openPasteSheet);
 
 function closePasteSheet() {
     if (pasteSheet.hidden) return;
@@ -382,25 +381,36 @@ function closePasteSheet() {
     setTimeout(() => { pasteSheet.hidden = true; }, 250);
 }
 
-document.getElementById('paste-run').addEventListener('click', () => {
-    const text = document.getElementById('paste-input').value.trim();
-    if (!text) { toast('일정 텍스트를 붙여넣어 주세요'); return; }
+// 붙여넣은 텍스트로 일정 생성 (랜딩·시트 공용)
+// 옛 제목·날짜를 끌고 오지 않음 — 텍스트에서 찾은 것만 사용 (없으면 편집에서 입력)
+function createFromText(text) {
+    if (!text) { toast('일정 텍스트를 붙여넣어 주세요'); return false; }
     const parsed = parseScheduleText(text);
     const total = parsed.days.reduce((n, d) => n + d.items.length, 0) + parsed.days.filter((d) => d.stay).length;
-    if (total === 0) { toast('일정을 찾지 못했어요 🥲'); return; }
+    if (total === 0) { toast('일정을 찾지 못했어요 🥲'); return false; }
+    if (hasContent() && !confirm('현재 일정을 새 일정으로 바꿀까요?')) return false;
 
-    const hasContent = state.days.some((d) => d.items.length || (d.stay && d.stay.trim()));
-    if (hasContent && !confirm('현재 일정을 새 일정으로 바꿀까요?')) return;
-
-    // 옛 제목·날짜를 끌고 오지 않음 — 텍스트에서 찾은 것만 사용 (없으면 편집에서 입력)
     state = parsed;
     save();
     render();
-    document.getElementById('paste-input').value = '';
+    toast(`일정 ${total}개를 만들었어요 ✨ 편집에서 다듬을 수 있어요`);
+    return true;
+}
+
+document.getElementById('paste-run').addEventListener('click', () => {
+    const input = document.getElementById('paste-input');
+    if (!createFromText(input.value.trim())) return;
+    input.value = '';
     closePasteSheet();
     backdrop.classList.remove('show');
     setTimeout(() => { backdrop.hidden = true; }, 250);
-    toast(`일정 ${total}개를 만들었어요 ✨ 편집에서 다듬을 수 있어요`);
+});
+
+document.getElementById('landing-run').addEventListener('click', () => {
+    const input = document.getElementById('landing-input');
+    if (!createFromText(input.value.trim())) return;
+    input.value = '';
+    window.scrollTo({ top: 0 });
 });
 
 // ---------- 공유용 텍스트 생성 ----------
