@@ -172,7 +172,13 @@ function renderNote() {
     );
 }
 
+function hasContent() {
+    return state.days.some((d) => d.items.length || (d.stay && d.stay.trim()));
+}
+
 function render() {
+    // 일정이 없으면 바이브 랜딩만 표시 (수동 입력 대신 붙여넣기가 유일한 시작점)
+    document.body.classList.toggle('empty', !hasContent() && !editing);
     renderHero();
     renderDays();
     renderNote();
@@ -356,7 +362,7 @@ document.getElementById('cat-list').addEventListener('click', (e) => {
 // (이미지로 일정과 같은 파이프라인에서 OCR만 생략한 흐름)
 const pasteSheet = document.getElementById('paste-sheet');
 
-document.getElementById('paste-open').addEventListener('click', () => {
+function openPasteSheet() {
     if (editing) editToggle.click();
     pasteSheet.hidden = false;
     backdrop.hidden = false;
@@ -365,7 +371,10 @@ document.getElementById('paste-open').addEventListener('click', () => {
         backdrop.classList.add('show');
         document.getElementById('paste-input').focus();
     });
-});
+}
+
+document.getElementById('paste-open').addEventListener('click', openPasteSheet);
+document.getElementById('landing-paste').addEventListener('click', openPasteSheet);
 
 function closePasteSheet() {
     if (pasteSheet.hidden) return;

@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="숲길따라 감성여행 - 여행 일정표">
     <meta name="theme-color" content="#f2f4f6">
-    <meta property="og:title" content="숲길따라 감성여행 · 텍스트로 일정">
-    <meta property="og:description" content="함께 떠나는 여행 일정을 확인해 보세요 🌲">
+    <meta property="og:title" content="숲길따라 감성여행 · 바이브 일정 만들기">
+    <meta property="og:description" content="어떤 양식이든 붙여넣으면 여행 일정표가 돼요 ✨">
     <meta property="og:type" content="website">
-    <title>숲길따라 감성여행 · 텍스트로 일정</title>
+    <title>숲길따라 감성여행 · 바이브 일정 만들기</title>
     <script>
         if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
             window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search + window.location.hash;
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="itinerary.css?v=20260705d">
+    <link rel="stylesheet" href="itinerary.css?v=20260705e">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
 <body>
@@ -33,7 +33,7 @@
 
         <nav class="tool-nav">
             <a href="index.html">🚌 버스 좌석표</a>
-            <a href="itinerary.html" class="active">📝 텍스트로 일정</a>
+            <a href="itinerary.html" class="active">✨ 바이브 일정</a>
             <a href="import.html">📷 이미지로 일정</a>
         </nav>
 
@@ -42,6 +42,15 @@
         </div>
 
         <main id="main">
+            <!-- 바이브 랜딩 (일정이 없을 때) -->
+            <section id="landing">
+                <div class="landing-emoji">✨</div>
+                <h1 class="landing-title">바이브 일정 만들기</h1>
+                <p class="landing-desc">카페 일정, 단체방 공지, 메모까지.<br>어떤 양식이든 붙여넣으면<br>보기 좋은 일정표로 만들어 드려요.</p>
+                <button id="landing-paste" class="big-btn landing-cta" type="button">📝 붙여넣어서 만들기</button>
+                <a class="landing-alt" href="import.html">📷 이미지로 만들기</a>
+            </section>
+
             <!-- 여행 요약 히어로 -->
             <section class="hero">
                 <div class="hero-deco" aria-hidden="true"></div>
@@ -93,8 +102,8 @@
     <!-- 텍스트 붙여넣기 시트 -->
     <div id="paste-sheet" class="sheet" hidden>
         <div class="sheet-handle"></div>
-        <h3 class="sheet-title">📝 텍스트로 일정 만들기</h3>
-        <p class="sheet-desc">카페 일정이나 단체방 공지를 그대로 붙여넣으면<br>자동으로 분류해서 일정표를 만들어 드려요.</p>
+        <h3 class="sheet-title">✨ 바이브 일정 만들기</h3>
+        <p class="sheet-desc">양식은 신경 쓰지 마세요.<br>그대로 붙여넣으면 알아서 분류해 드려요.</p>
         <textarea id="paste-input" rows="8" placeholder="10시 체크아웃
 마루이케 16나한상
 점심
@@ -106,7 +115,7 @@
 
     <div id="toast" class="toast" hidden></div>
 
-    <script src="parse-rules.js?v=20260705d"></script>
-    <script src="itinerary.js?v=20260705d"></script>
+    <script src="parse-rules.js?v=20260705e"></script>
+    <script src="itinerary.js?v=20260705e"></script>
 </body>
 </html>
