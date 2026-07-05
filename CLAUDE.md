@@ -8,7 +8,7 @@
 | 파일 | 역할 |
 |---|---|
 | `index.html` + `script.js` + `styles.css` | 버스 좌석표 도구 (기존) |
-| `itinerary.html` + `itinerary.js` + `itinerary.css` | **텍스트로 일정**: 텍스트 붙여넣기 → 자동 분류 + 직접 편집·공유 (토스 스타일 모바일 UI) |
+| `itinerary.html` + `itinerary.js` + `itinerary.css` | **바이브 일정**: 어떤 양식이든 붙여넣으면 일정표로 (붙여넣기가 유일한 시작점, 수동 입력 폐지. 편집은 다듬기 용도) |
 | `import.html` + `import.js` + `import.css` | **이미지로 일정**: 이미지(OCR) → 일정 자동 변환 도구 |
 | `parse-rules.js` | **두 일정 페이지가 공유**하는 카테고리 정의(`CATS`)와 파싱 규칙(`PARSE_RULES`) |
 

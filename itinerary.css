@@ -134,6 +134,69 @@ main {
     padding: 8px 16px calc(110px + env(safe-area-inset-bottom));
 }
 
+/* ---------- 바이브 랜딩 (일정이 없을 때) ---------- */
+#landing { display: none; }
+
+body.empty #landing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 13vh 12px 40px;
+}
+
+/* 빈 상태에서는 랜딩만 — 편집기·공유 UI 전부 숨김 */
+body.empty .hero,
+body.empty #days,
+body.empty #add-day,
+body.empty #note-card,
+body.empty .footer-hint,
+body.empty .action-bar,
+body.empty .top-actions {
+    display: none !important;
+}
+
+.landing-emoji {
+    font-size: 54px;
+    line-height: 1;
+}
+
+.landing-title {
+    margin-top: 18px;
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+}
+
+.landing-desc {
+    margin-top: 12px;
+    font-size: 15px;
+    color: var(--text-sub);
+    line-height: 1.7;
+    word-break: keep-all;
+}
+
+.landing-cta {
+    margin-top: 30px;
+    max-width: 340px;
+    padding: 18px;
+    font-size: 16.5px;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(13, 148, 99, 0.3);
+}
+
+.landing-alt {
+    margin-top: 14px;
+    text-decoration: none;
+    background: #fff;
+    color: var(--text-sub);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 99px;
+    box-shadow: var(--shadow);
+}
+
 /* ---------- 히어로 ---------- */
 .hero {
     position: relative;
