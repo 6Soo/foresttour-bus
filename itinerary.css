@@ -206,6 +206,8 @@ body.empty .top-actions {
 }
 
 /* ---------- 히어로 ---------- */
+.hero.hidden-view { display: none; }
+
 .hero {
     position: relative;
     overflow: hidden;
