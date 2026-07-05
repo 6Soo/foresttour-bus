@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="숲길따라 감성여행 - 버스 좌석 배치도">
+    <meta name="theme-color" content="#f2f4f6">
+    <title>숲길따라 감성여행 · 버스 좌석표</title>
+    <script>
+        if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search;
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="styles.css?v=20260705i">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+</head>
+<body>
+    <div class="wrap">
+        <header class="top-bar">
+            <a href="index.html" class="brand">
+                <span class="brand-logo">🌲</span>
+                <span class="brand-name">숲길따라 감성여행</span>
+            </a>
+        </header>
+
+        <nav class="tool-nav">
+            <a href="bus.html" class="active">🚌 버스 좌석표</a>
+            <a href="itinerary.html">✨ 바이브 일정</a>
+            <a href="import.html">📷 이미지로 일정</a>
+        </nav>
+
+        <div class="app-container">
+            <header>
+                <nav class="bus-selector">
+                    <button data-bus="hiace10" class="active">
+                        <span class="bus-name">하이에이스/그랜드캐빈</span>
+                        <span class="bus-capacity">10인승</span>
+                    </button>
+                    <button data-bus="japan24">
+                        <span class="bus-name">코스터</span>
+                        <span class="bus-capacity">24인승</span>
+                    </button>
+                    <button data-bus="japan28">
+                        <span class="bus-name">코스터</span>
+                        <span class="bus-capacity">28인승</span>
+                    </button>
+                    <button data-bus="korea40">
+                        <span class="bus-name">한국형 대형</span>
+                        <span class="bus-capacity">40인승</span>
+                    </button>
+                </nav>
+            </header>
+
+            <main>
+                <div id="capture-area" class="capture-area">
+                    <div class="trip-header">
+                        <h1>숲길따라 감성여행</h1>
+                        <h2 id="trip-name" contenteditable="true" data-placeholder="여행 이름 입력 (예: 0704_0709 야마가타)">0704_0709 야마가타</h2>
+                    </div>
+
+                    <div class="layout-wrapper">
+                    <div class="bus-front-indicator">FRONT</div>
+                    <div id="bus-view" class="bus-container">
+                        <!-- Bus layout will be injected here via JS -->
+                    </div>
+                </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="share-btn" class="share-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        이미지 캡처 및 카카오톡 공유
+                    </button>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="script.js?v=20260705i"></script>
+</body>
+</html>

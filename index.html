@@ -2,74 +2,69 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="프리미엄 여행사 버스 좌석 배치도">
-    <title>숲길따라 감성여행 버스 좌석표</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="숲길따라 감성여행 - 가이드 여행 도구 모음">
+    <meta name="theme-color" content="#f2f4f6">
+    <meta property="og:title" content="숲길따라 감성여행 · 여행 도구">
+    <meta property="og:description" content="가이드님을 위한 여행 수행 도구 모음 🌲">
+    <meta property="og:type" content="website">
+    <title>숲길따라 감성여행 · 여행 도구</title>
     <script>
         if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
             window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search;
         }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260705h">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="itinerary.css?v=20260705i">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+    <link rel="prefetch" href="bus.html">
     <link rel="prefetch" href="itinerary.html">
     <link rel="prefetch" href="import.html">
-    <link rel="prefetch" href="itinerary.css?v=20260705h">
-    <link rel="prefetch" href="parse-rules.js?v=20260705h">
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <nav class="tool-nav">
-                <a href="index.html" class="active">🚌 버스 좌석표</a>
-                <a href="itinerary.html">✨ 바이브 일정</a>
-                <a href="import.html">📷 이미지로 일정</a>
-            </nav>
-            <nav class="bus-selector">
-                <button data-bus="hiace10" class="active">
-                    <span class="bus-name">하이에이스/그랜드캐빈</span>
-                    <span class="bus-capacity">10인승</span>
-                </button>
-                <button data-bus="japan24">
-                    <span class="bus-name">코스터</span>
-                    <span class="bus-capacity">24인승</span>
-                </button>
-                <button data-bus="japan28">
-                    <span class="bus-name">코스터</span>
-                    <span class="bus-capacity">28인승</span>
-                </button>
-                <button data-bus="korea40">
-                    <span class="bus-name">한국형 대형</span>
-                    <span class="bus-capacity">40인승</span>
-                </button>
-            </nav>
+    <div class="wrap">
+        <header class="top-bar">
+            <a href="index.html" class="brand">
+                <span class="brand-logo">🌲</span>
+                <span class="brand-name">숲길따라 감성여행</span>
+            </a>
         </header>
 
-        <main>
-            <div id="capture-area" class="capture-area">
-                <div class="trip-header">
-                    <h1>숲길따라 감성여행</h1>
-                    <h2 id="trip-name" contenteditable="true" data-placeholder="여행 이름 입력 (예: 0704_0709 야마가타)">0704_0709 야마가타</h2>
-                </div>
+        <main class="home-main">
+            <section class="home-greeting">
+                <h1>가이드님,<br>오늘도 좋은 여행 되세요 🌿</h1>
+                <p>여행 수행에 필요한 도구를 골라 주세요.</p>
+            </section>
 
-                <div class="layout-wrapper">
-                <div class="bus-front-indicator">FRONT</div>
-                <div id="bus-view" class="bus-container">
-                    <!-- Bus layout will be injected here via JS -->
-                </div>
-            </div>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="share-btn" class="share-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                    이미지 캡처 및 카카오톡 공유
-                </button>
-            </div>
+            <section class="home-tools">
+                <a class="tool-card" href="itinerary.html">
+                    <span class="tool-icon" style="background:#e7f6ef;">✨</span>
+                    <span class="tool-body">
+                        <span class="tool-name">바이브 일정</span>
+                        <span class="tool-desc">어떤 양식이든 붙여넣으면 일정표로</span>
+                    </span>
+                    <span class="tool-arrow">›</span>
+                </a>
+                <a class="tool-card" href="import.html">
+                    <span class="tool-icon" style="background:#eaf2fe;">📷</span>
+                    <span class="tool-body">
+                        <span class="tool-name">이미지로 일정</span>
+                        <span class="tool-desc">일정 캡처를 올리면 자동 변환</span>
+                    </span>
+                    <span class="tool-arrow">›</span>
+                </a>
+                <a class="tool-card" href="bus.html">
+                    <span class="tool-icon" style="background:#fef3e2;">🚌</span>
+                    <span class="tool-body">
+                        <span class="tool-name">버스 좌석표</span>
+                        <span class="tool-desc">차량별 좌석 배치도 만들기·공유</span>
+                    </span>
+                    <span class="tool-arrow">›</span>
+                </a>
+            </section>
+
+            <p class="footer-hint">숲길따라 감성여행 · foresttour.kr</p>
         </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="script.js?v=20260705h"></script>
 </body>
 </html>
