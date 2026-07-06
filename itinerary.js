@@ -20,8 +20,9 @@ function defaultData() {
 }
 
 // ---------- 상태 ----------
+// 별도 편집 모드 없음 — 화면의 각 오브젝트를 터치하면 바로 편집됩니다.
 let state;
-let editing = false;
+let heroOpen = false; // 제목·날짜가 비어 있을 때 히어로를 펼쳐서 입력 중인지
 let sheetTarget = null; // { d, i }
 
 function loadInitial() {
@@ -83,9 +84,11 @@ function escapeHtml(s) {
 }
 
 function renderHero() {
-    // 제목·날짜가 모두 비어 있으면(데일리 공지) 보기 화면에서 히어로 숨김 — 편집 때만 표시
+    // 제목·날짜가 모두 비어 있으면(데일리 공지) 히어로를 접고 "＋ 넣기" 버튼만 표시
     const heroEmpty = !(state.title && state.title.trim()) && !state.startDate;
-    document.querySelector('.hero').classList.toggle('hidden-view', heroEmpty && !editing);
+    const heroHidden = heroEmpty && !heroOpen;
+    document.querySelector('.hero').classList.toggle('hidden-view', heroHidden);
+    document.getElementById('hero-open').hidden = !heroHidden;
 
     const titleEl = document.getElementById('trip-title');
     if (titleEl.textContent !== state.title) titleEl.textContent = state.title;
@@ -112,11 +115,11 @@ function renderDays() {
             const cat = CATS[item.cat] || CATS.spot;
             return `
             <div class="item-row" data-d="${d}" data-i="${i}">
-                <button class="cat-badge" type="button" style="background:${cat.bg}" data-act="cat" ${editing ? '' : 'tabindex="-1"'} aria-label="일정 종류 변경">${cat.emoji}</button>
+                <button class="cat-badge" type="button" style="background:${cat.bg}" data-act="cat" aria-label="일정 종류 변경">${cat.emoji}</button>
                 <div class="item-body">
                     <div class="item-cat-label" style="color:${cat.color}">${cat.label}</div>
-                    ${item.time || editing ? `<div class="item-time" data-field="item-time" ${editing ? 'contenteditable="plaintext-only"' : ''} data-placeholder="시간 (선택)">${escapeHtml(item.time || '')}</div>` : ''}
-                    <div class="item-text" data-field="item-text" ${editing ? 'contenteditable="plaintext-only"' : ''} data-placeholder="일정을 입력하세요">${escapeHtml(item.text)}</div>
+                    <div class="item-time" data-field="item-time" contenteditable="plaintext-only" data-placeholder="시간 (선택)">${escapeHtml(item.time || '')}</div>
+                    <div class="item-text" data-field="item-text" contenteditable="plaintext-only" data-placeholder="일정을 입력하세요">${escapeHtml(item.text)}</div>
                 </div>
                 <div class="row-actions">
                     <button type="button" data-act="up" aria-label="위로">↑</button>
@@ -126,33 +129,31 @@ function renderDays() {
             </div>`;
         }).join('');
 
-        const hasStay = day.stay !== undefined && day.stay !== null && (editing ? day.stay !== null : day.stay.trim() !== '');
-        const stayHtml = (day.stay && day.stay.trim()) || (editing && day.stay !== '')
+        const stayHtml = day.stay
             ? `
             <div class="stay-block" data-d="${d}">
                 <div class="stay-icon">🏨</div>
                 <div class="stay-body">
                     <div class="stay-label">숙박</div>
-                    <div class="stay-text" data-field="stay-text" ${editing ? 'contenteditable="plaintext-only"' : ''} data-placeholder="숙소를 입력하세요">${escapeHtml(day.stay)}</div>
+                    <div class="stay-text" data-field="stay-text" contenteditable="plaintext-only" data-placeholder="숙소를 입력하세요">${escapeHtml(day.stay)}</div>
                 </div>
                 <button type="button" class="stay-del" data-act="stay-del" aria-label="숙박 삭제">✕</button>
             </div>`
-            : (editing ? `<button type="button" class="add-stay edit-only" data-d="${d}" data-act="add-stay">＋ 숙박 추가</button>` : '');
+            : `<button type="button" class="add-stay edit-only" data-d="${d}" data-act="add-stay">＋ 숙박 추가</button>`;
 
         const dayHead = singleDay ? '' : `
             <div class="day-head">
                 <span class="day-chip">DAY ${d + 1}</span>
                 <span class="day-date">${escapeHtml(dateLabel)}</span>
-                ${editing
-                    ? `<button type="button" class="day-del" data-act="day-del" data-d="${d}">삭제</button>`
-                    : `<button type="button" class="day-share" data-act="day-share" data-d="${d}">📤 공유</button>`}
+                <button type="button" class="day-share" data-act="day-share" data-d="${d}">📤 공유</button>
+                <button type="button" class="day-del" data-act="day-del" data-d="${d}">✕</button>
             </div>`;
 
         return `
         <article class="day-card" data-d="${d}">
             ${dayHead}
-            <div class="timeline">${itemsHtml || (editing ? '' : '<p style="color:var(--text-weak);font-size:14px;">일정이 없습니다</p>')}</div>
-            ${editing ? `<button type="button" class="add-item edit-only" data-d="${d}" data-act="add-item">＋ 일정 추가</button>` : ''}
+            <div class="timeline">${itemsHtml}</div>
+            <button type="button" class="add-item edit-only" data-d="${d}" data-act="add-item">＋ 일정 추가</button>
             ${stayHtml}
         </article>`;
     }).join('');
@@ -161,10 +162,7 @@ function renderDays() {
 function renderNote() {
     const noteEl = document.getElementById('trip-note');
     if (noteEl.textContent !== state.note) noteEl.textContent = state.note;
-    noteEl.setAttribute('contenteditable', editing ? 'plaintext-only' : 'false');
-    document.getElementById('note-card').classList.toggle(
-        'hidden-view', !editing && !(state.note && state.note.trim())
-    );
+    noteEl.setAttribute('contenteditable', 'plaintext-only');
 }
 
 function hasContent() {
@@ -173,29 +171,26 @@ function hasContent() {
 
 function render() {
     // 일정이 없으면 바이브 랜딩만 표시 (수동 입력 대신 붙여넣기가 유일한 시작점)
-    document.body.classList.toggle('empty', !hasContent() && !editing);
+    document.body.classList.toggle('empty', !hasContent());
     renderHero();
     renderDays();
     renderNote();
-    document.getElementById('trip-title').setAttribute('contenteditable', editing ? 'plaintext-only' : 'false');
+    document.getElementById('trip-title').setAttribute('contenteditable', 'plaintext-only');
 }
 
-// ---------- 편집 모드 ----------
-const editToggle = document.getElementById('edit-toggle');
-editToggle.addEventListener('click', () => {
-    editing = !editing;
-    document.body.classList.toggle('editing', editing);
-    editToggle.textContent = editing ? '완료' : '편집';
-    if (!editing) {
-        // 완료 시 빈 항목 정리
-        state.days.forEach((day) => {
-            day.items = day.items.filter((it) => it.text.trim() !== '');
-            day.items.forEach((it) => { if (!String(it.time || '').trim()) delete it.time; });
-        });
-        save();
-        toast('저장되었습니다 ✅');
-    }
+// 빈 항목 정리 (공유·복사 직전에 호출 — 터치 편집 중에는 빈 칸을 그대로 둠)
+function pruneEmptyItems() {
+    state.days.forEach((day) => {
+        day.items = day.items.filter((it) => it.text.trim() !== '' || String(it.time || '').trim() !== '');
+        day.items.forEach((it) => { if (!String(it.time || '').trim()) delete it.time; });
+    });
+}
+
+// 접힌 히어로 펼치기 (제목·날짜 입력 시작)
+document.getElementById('hero-open').addEventListener('click', () => {
+    heroOpen = true;
     render();
+    document.getElementById('trip-title').focus();
 });
 
 // ---------- 이벤트 위임 ----------
@@ -251,16 +246,14 @@ document.getElementById('main').addEventListener('keydown', (e) => {
 });
 
 document.getElementById('main').addEventListener('click', (e) => {
-    const shareBtn = e.target.closest('[data-act="day-share"]');
-    if (shareBtn && !editing) {
-        shareDay(+shareBtn.dataset.d, shareBtn);
-        return;
-    }
-    if (!editing) return;
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
     const act = btn.dataset.act;
 
+    if (act === 'day-share') {
+        shareDay(+btn.dataset.d, btn);
+        return;
+    }
     if (act === 'cat') {
         const row = btn.closest('.item-row');
         openSheet(+row.dataset.d, +row.dataset.i);
@@ -366,7 +359,6 @@ document.getElementById('cat-list').addEventListener('click', (e) => {
 const pasteSheet = document.getElementById('paste-sheet');
 
 function openPasteSheet() {
-    if (editing) editToggle.click();
     pasteSheet.hidden = false;
     backdrop.hidden = false;
     requestAnimationFrame(() => {
@@ -394,9 +386,10 @@ function createFromText(text) {
     if (hasContent() && !confirm('현재 일정을 새 일정으로 바꿀까요?')) return false;
 
     state = parsed;
+    heroOpen = false;
     save();
     render();
-    toast(`일정 ${total}개를 만들었어요 ✨ 편집에서 다듬을 수 있어요`);
+    toast(`일정 ${total}개를 만들었어요 ✨ 항목을 터치하면 바로 고칠 수 있어요`);
     return true;
 }
 
@@ -436,6 +429,7 @@ function buildShareText() {
             lines.push(`📅 ${head}`);
         }
         day.items.forEach((item) => {
+            if (!item.text.trim() && !String(item.time || '').trim()) return; // 빈 칸 제외
             const cat = CATS[item.cat] || CATS.spot;
             // 시간이 있으면 시간 줄 + 일정 줄 두 줄로
             if (item.time && item.time.trim()) {
@@ -497,27 +491,27 @@ function loadScript(src) {
 
 async function captureItineraryImage() {
     if (!window.html2canvas) await loadScript(HTML2CANVAS_CDN);
+
+    // 캡처 전 정리: 빈 항목 제거 + 포커스 해제 (터치 편집 흔적이 이미지에 남지 않도록)
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    pruneEmptyItems();
+    render();
+
     const el = document.getElementById('main');
     const hero = el.querySelector('.hero');
+    const noteCard = document.getElementById('note-card');
     // 제목·날짜가 모두 비어 있으면 (데일리 공지) 공유 이미지에서 히어로 제외
     const heroEmpty = !(state.title && state.title.trim()) && !state.startDate;
-
-    // 원데이 공지: 흰색 카드 영역만 캡처 (배경 여백·푸터 없이)
-    if (state.days.length === 1 && heroEmpty) {
-        const card = el.querySelector('.day-card');
-        const canvas = await window.html2canvas(card, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            useCORS: true,
-        });
-        return await canvasToBlob(canvas);
-    }
+    const noteEmpty = !(state.note && state.note.trim());
 
     el.classList.add('capturing');
     if (heroEmpty) hero.classList.add('capture-hide');
+    if (noteEmpty) noteCard.classList.add('capture-hide');
     try {
-        const canvas = await window.html2canvas(el, {
-            backgroundColor: '#f2f4f6',
+        // 원데이 공지: 흰색 카드 영역만 캡처 (배경 여백·푸터 없이)
+        const target = (state.days.length === 1 && heroEmpty) ? el.querySelector('.day-card') : el;
+        const canvas = await window.html2canvas(target, {
+            backgroundColor: target === el ? '#f2f4f6' : '#ffffff',
             scale: 2,
             useCORS: true,
         });
@@ -525,6 +519,7 @@ async function captureItineraryImage() {
     } finally {
         el.classList.remove('capturing');
         hero.classList.remove('capture-hide');
+        noteCard.classList.remove('capture-hide');
     }
 }
 
@@ -560,8 +555,6 @@ function canvasToBlob(canvas) {
 // 전체 일정 공유
 const kakaoBtn = document.getElementById('kakao-btn');
 kakaoBtn.addEventListener('click', async () => {
-    if (editing) editToggle.click(); // 편집 중이면 저장하고 보기 화면으로 전환 후 캡처
-
     const originalHtml = kakaoBtn.innerHTML;
     kakaoBtn.disabled = true;
     kakaoBtn.textContent = '이미지 만드는 중... ⏳';
@@ -579,6 +572,12 @@ kakaoBtn.addEventListener('click', async () => {
 
 // 일자별 공유 — 해당 일차 카드만 담은 이미지를 만들어 공유
 async function shareDay(d, btn) {
+    // 캡처 전 정리: 빈 항목 제거 + 포커스 해제 (재렌더로 버튼이 교체되므로 다시 찾음)
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    pruneEmptyItems();
+    render();
+    btn = document.querySelector(`.day-share[data-d="${d}"]`) || btn;
+
     const original = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳';
@@ -594,8 +593,10 @@ async function shareDay(d, btn) {
                 <h2>${escapeHtml(state.title || '여행 일정')}</h2>
             </div>`;
         const clone = document.querySelector(`.day-card[data-d="${d}"]`).cloneNode(true);
-        const cloneShare = clone.querySelector('.day-share');
-        if (cloneShare) cloneShare.remove(); // 캡처 이미지에는 공유 버튼 제외
+        // 캡처 이미지에는 터치 편집 UI 제외
+        clone.querySelectorAll('.day-share, .day-del, .row-actions, .add-item, .add-stay, .stay-del')
+            .forEach((n) => n.remove());
+        clone.querySelectorAll('.item-time').forEach((n) => { if (!n.textContent.trim()) n.remove(); });
         wrap.appendChild(clone);
         const foot = document.createElement('p');
         foot.className = 'footer-hint';

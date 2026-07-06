@@ -15,10 +15,10 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="itinerary.css?v=20260705k">
+    <link rel="stylesheet" href="itinerary.css?v=20260706a">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
-<body>
+<body class="editing">
     <div class="wrap">
         <header class="top-bar">
             <a href="index.html" class="brand">
@@ -27,7 +27,6 @@
             </a>
             <div class="top-actions">
                 <button id="paste-open" class="edit-toggle" type="button">📝 붙여넣기</button>
-                <button id="edit-toggle" class="edit-toggle" type="button">편집</button>
             </div>
         </header>
 
@@ -57,7 +56,8 @@
                 <a class="landing-alt" href="import.html">📷 이미지로 만들기</a>
             </section>
 
-            <!-- 여행 요약 히어로 -->
+            <!-- 여행 요약 히어로 (제목·날짜가 없으면 접혀 있음 — 버튼으로 펼침) -->
+            <button id="hero-open" class="hero-open" type="button" hidden>＋ 여행 이름 · 날짜 넣기</button>
             <section class="hero">
                 <div class="hero-deco" aria-hidden="true"></div>
                 <p class="hero-eyebrow">TRAVEL ITINERARY</p>
@@ -121,7 +121,7 @@
 
     <div id="toast" class="toast" hidden></div>
 
-    <script src="parse-rules.js?v=20260705k"></script>
-    <script src="itinerary.js?v=20260705k"></script>
+    <script src="parse-rules.js?v=20260706a"></script>
+    <script src="itinerary.js?v=20260706a"></script>
 </body>
 </html>

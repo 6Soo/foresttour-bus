@@ -115,10 +115,6 @@ body {
     transition: all 0.15s;
 }
 
-body.editing .edit-toggle {
-    background: var(--green);
-    color: #fff;
-}
 
 /* ---------- 공유 배너 ---------- */
 .shared-banner {
@@ -236,6 +232,7 @@ body.empty #landing {
 
 /* 빈 상태에서는 랜딩만 — 편집기·공유 UI 전부 숨김 */
 body.empty .hero,
+body.empty #hero-open,
 body.empty #days,
 body.empty #add-day,
 body.empty #note-card,
@@ -336,10 +333,33 @@ body.empty .top-actions {
     position: relative;
 }
 
+/* 터치 편집: 밑줄은 해당 칸을 터치(포커스)했을 때만 표시 */
 body.editing .hero-title {
-    border-bottom: 2px dashed rgba(255, 255, 255, 0.4);
+    border-bottom: 2px dashed transparent;
     padding-bottom: 4px;
 }
+body.editing .hero-title:focus { border-bottom-color: rgba(255, 255, 255, 0.45); }
+
+/* 접힌 히어로 펼치기 버튼 (제목·날짜 없는 데일리 공지 상태) */
+.hero-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    margin-top: 4px;
+    border: 1.5px dashed var(--line);
+    background: transparent;
+    color: var(--text-weak);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+}
+.hero-open:active { background: var(--bg); }
+.hero-open[hidden] { display: none !important; }
 
 .hero-dates {
     margin-top: 10px;
@@ -428,10 +448,13 @@ body.editing .hero-title {
     font-family: inherit;
     font-size: 12px;
     font-weight: 700;
-    padding: 6px 12px;
+    padding: 6px 10px;
     border-radius: 99px;
     cursor: pointer;
+    flex-shrink: 0;
 }
+/* 공유 버튼과 나란히 있을 때는 공유가 오른쪽 정렬을 담당 */
+.day-share + .day-del { margin-left: 0; }
 
 /* 일자별 이미지 공유 버튼 */
 .day-share {
@@ -524,10 +547,8 @@ body.editing .hero-title {
     padding: 0;
 }
 
-body.editing .cat-badge {
-    cursor: pointer;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--line);
-}
+body.editing .cat-badge { cursor: pointer; }
+body.editing .cat-badge:active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--line); }
 
 .item-body { flex: 1; min-width: 0; padding-top: 1px; }
 
@@ -547,13 +568,16 @@ body.editing .cat-badge {
     margin: 1px 0;
 }
 
-body:not(.editing) .item-time:empty { display: none; }
-
 body.editing .item-time {
     min-height: 19px;
-    border-bottom: 1.5px dashed var(--line);
+    border-bottom: 1.5px dashed transparent;
     padding-bottom: 1px;
 }
+body.editing .item-time:focus { border-bottom-color: var(--line); }
+
+/* 시간이 빈 항목은 평소엔 시간 줄 숨김 — 항목을 터치하면 나타나서 채울 수 있음 */
+body.editing .item-time:empty { display: none; }
+.item-row:focus-within .item-time:empty { display: block; }
 
 body.editing .item-time:empty::before {
     content: attr(data-placeholder);
@@ -570,9 +594,10 @@ body.editing .item-time:empty::before {
 }
 
 body.editing .item-text {
-    border-bottom: 1.5px dashed var(--line);
+    border-bottom: 1.5px dashed transparent;
     padding-bottom: 2px;
 }
+body.editing .item-text:focus { border-bottom-color: var(--line); }
 
 .row-actions {
     display: none;
@@ -581,7 +606,8 @@ body.editing .item-text {
     padding-top: 4px;
 }
 
-body.editing .row-actions { display: flex; }
+/* 항목을 터치(포커스)한 동안만 이동·삭제 버튼 표시 */
+.item-row:focus-within .row-actions { display: flex; }
 
 .row-actions button {
     width: 28px;
@@ -641,9 +667,10 @@ body.editing .row-actions { display: flex; }
 }
 
 body.editing .stay-text {
-    border-bottom: 1.5px dashed rgba(39, 121, 189, 0.3);
+    border-bottom: 1.5px dashed transparent;
     padding-bottom: 2px;
 }
+body.editing .stay-text:focus { border-bottom-color: rgba(39, 121, 189, 0.3); }
 
 .stay-del {
     display: none;
@@ -655,7 +682,7 @@ body.editing .stay-text {
     padding: 4px;
     flex-shrink: 0;
 }
-body.editing .stay-del { display: block; }
+.stay-block:focus-within .stay-del { display: block; }
 
 /* ---------- 편집 전용 버튼 ---------- */
 .edit-only { display: none !important; }
@@ -724,10 +751,13 @@ body.editing .edit-only { display: flex !important; }
 }
 
 body.editing .note-body {
-    border: 1.5px dashed var(--line);
+    border: 1.5px dashed transparent;
     border-radius: 10px;
     padding: 10px 12px;
+    margin: -10px -12px 0;
 }
+body.editing .note-body:focus,
+body.editing .note-body:empty { border-color: var(--line); }
 
 .footer-hint {
     text-align: center;
@@ -744,6 +774,18 @@ main.capturing {
 main.capturing [contenteditable]:empty::before,
 main.capturing [data-placeholder]:empty::before {
     content: none;
+}
+
+/* 캡처 이미지에는 터치 편집 UI를 찍지 않음 */
+main.capturing .edit-only,
+main.capturing .row-actions,
+main.capturing .day-share,
+main.capturing .day-del,
+main.capturing .stay-del,
+main.capturing .hero-open,
+main.capturing .hero-date-edit,
+main.capturing .item-time:empty {
+    display: none !important;
 }
 
 .capture-hide { display: none !important; }
