@@ -162,64 +162,68 @@ document.querySelectorAll('.bus-selector button').forEach(btn => {
 // Initial render
 renderBus('hiace10');
 
-// Share & Screenshot functionality
+// ---------- 좌석표 이미지 캡처 & 카카오톡 공유 ----------
+// (일정 페이지와 동일한 흐름: await로 이어진 캡처→공유로 모바일 공유 권한 유지.
+//  toBlob 콜백 안에서 share를 부르면 사용자 제스처가 끊겨 공유가 안 되고 다운로드로 새던 버그 수정)
+function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('캡처 실패'))), 'image/png');
+    });
+}
+
+async function captureBusChart() {
+    const captureArea = document.getElementById('capture-area');
+    captureArea.classList.add('capturing');
+    // 편집 중이던 좌석의 포커스(파란 테두리)가 이미지에 남지 않도록 해제
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    try {
+        const canvas = await html2canvas(captureArea, {
+            backgroundColor: '#ffffff', // 라이트 테마 흰색 카드
+            scale: 2,
+            logging: false,
+            useCORS: true,
+        });
+        return await canvasToBlob(canvas);
+    } finally {
+        captureArea.classList.remove('capturing');
+    }
+}
+
 const shareBtn = document.getElementById('share-btn');
 shareBtn.addEventListener('click', async () => {
+    const originalText = shareBtn.innerHTML;
+    shareBtn.innerHTML = '이미지 만드는 중... ⏳';
+    shareBtn.disabled = true;
     try {
-        // Change button text to show progress
-        const originalText = shareBtn.innerHTML;
-        shareBtn.innerHTML = '캡처 중... ⏳';
-        shareBtn.disabled = true;
+        const blob = await captureBusChart();
+        const file = new File([blob], '버스_좌석표.png', { type: 'image/png' });
 
-        const captureArea = document.getElementById('capture-area');
-        captureArea.classList.add('capturing');
-        
-        // Use html2canvas to capture the element
-        const canvas = await html2canvas(captureArea, {
-            backgroundColor: '#0f172a', // Match the dark theme background
-            scale: 2, // High resolution for mobile
-            logging: false,
-            useCORS: true
-        });
-        
-        captureArea.classList.remove('capturing');
-        
-        canvas.toBlob(async (blob) => {
-            const file = new File([blob], 'bus-seating-chart.png', { type: 'image/png' });
-            
-            // Check if Web Share API with files is supported (mostly mobile browsers like Safari iOS, Chrome Android)
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: '프리미엄 버스 좌석표',
-                        text: '여행사 버스 좌석 배치도입니다. 확인 부탁드립니다.',
-                        files: [file]
-                    });
-                    console.log('Shared successfully');
-                } catch (error) {
-                    console.error('Sharing failed or was cancelled:', error);
-                    // If user cancelled, don't download it automatically to avoid annoyance
-                }
-            } else {
-                // Fallback for Desktop or unsupported browsers: Download the image
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'bus-seating-chart.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                alert('이미지가 기기에 저장되었습니다. 카카오톡 PC버전이나 메신저를 통해 이미지를 전송해주세요!');
+        // 1) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file], title: '버스 좌석표' });
+                return; // 공유 성공(또는 사용자가 시트를 닫음)
+            } catch (error) {
+                if (error.name === 'AbortError') return; // 사용자가 취소
+                // 공유 실패 시에만 아래 저장 폴백으로 진행
             }
-            
-            // Restore button state
-            shareBtn.innerHTML = originalText;
-            shareBtn.disabled = false;
-        });
+        }
+
+        // 2) 폴백(PC·미지원 브라우저): 이미지 파일로 저장
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '버스_좌석표.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        alert('좌석표 이미지를 저장했어요. 카카오톡에서 사진으로 보내주세요 📷');
     } catch (err) {
         console.error('Error generating image:', err);
         alert('이미지 생성 중 오류가 발생했습니다.');
+    } finally {
+        shareBtn.innerHTML = originalText;
         shareBtn.disabled = false;
     }
 });
