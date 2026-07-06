@@ -182,6 +182,30 @@ main {
     background: #ffffff;
 }
 
+/* 캡처 고정 브랜드 제목 (일정표와 통일된 느낌) */
+.capture-brand {
+    text-align: center;
+    width: 100%;
+    padding: 0.25rem 0 0.5rem;
+}
+
+.capture-brand-eyebrow {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-bottom: 0.35rem;
+}
+
+.capture-brand-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--green-deep);
+}
+
 .layout-wrapper {
     position: relative;
     padding-top: 1.5rem;

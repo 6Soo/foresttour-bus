@@ -156,6 +156,7 @@ document.querySelectorAll('.bus-selector button').forEach(btn => {
         // Update layout
         currentLayout = targetBtn.dataset.bus;
         renderBus(currentLayout);
+        scheduleShareImage(500); // 차종이 바뀌면 미리보기 이미지 갱신
     });
 });
 
@@ -163,8 +164,11 @@ document.querySelectorAll('.bus-selector button').forEach(btn => {
 renderBus('hiace10');
 
 // ---------- 좌석표 이미지 캡처 & 카카오톡 공유 ----------
-// (일정 페이지와 동일한 흐름: await로 이어진 캡처→공유로 모바일 공유 권한 유지.
-//  toBlob 콜백 안에서 share를 부르면 사용자 제스처가 끊겨 공유가 안 되고 다운로드로 새던 버그 수정)
+// 모바일에서 공유 버튼을 누른 순간 바로 공유창이 떠야 한다.
+// html2canvas 캡처는 폰에서 1~3초 걸리는데, 그 사이에 사용자 터치 제스처(공유 권한)가
+// 만료되어 navigator.share가 실패 → 다운로드로 새던 문제가 있었다.
+// 해결: 이미지를 미리 만들어 두고(좌석이 바뀔 때마다 백그라운드 갱신),
+//       버튼을 누르면 캡처 없이 준비된 이미지로 즉시 공유 → 제스처 유지.
 function canvasToBlob(canvas) {
     return new Promise((resolve, reject) => {
         canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('캡처 실패'))), 'image/png');
@@ -172,58 +176,88 @@ function canvasToBlob(canvas) {
 }
 
 async function captureBusChart() {
-    const captureArea = document.getElementById('capture-area');
-    captureArea.classList.add('capturing');
-    // 편집 중이던 좌석의 포커스(파란 테두리)가 이미지에 남지 않도록 해제
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    // 실제 화면은 건드리지 않고 html2canvas 복제본에만 .capturing 스타일 적용
+    // → 백그라운드 갱신이 타이핑 중에 돌아도 화면 깜빡임/포커스 뺏김 없음
+    const canvas = await html2canvas(document.getElementById('capture-area'), {
+        backgroundColor: '#ffffff', // 라이트 테마 흰색 카드
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        onclone: (doc) => {
+            const el = doc.getElementById('capture-area');
+            if (el) el.classList.add('capturing');
+        },
+    });
+    return await canvasToBlob(canvas);
+}
+
+// 항상 최신 좌석표 이미지를 미리 만들어 둔다 (좌석 변경/차종 변경 시 갱신)
+let shareBlob = null;
+let regenTimer = null;
+let regenRunning = false;
+let regenQueued = false;
+
+async function regenerateShareImage() {
+    if (regenRunning) { regenQueued = true; return; }
+    regenRunning = true;
     try {
-        const canvas = await html2canvas(captureArea, {
-            backgroundColor: '#ffffff', // 라이트 테마 흰색 카드
-            scale: 2,
-            logging: false,
-            useCORS: true,
-        });
-        return await canvasToBlob(canvas);
+        shareBlob = await captureBusChart();
+    } catch (e) {
+        // 실패 시 직전 이미지를 유지 — 다음 변경 때 다시 시도
     } finally {
-        captureArea.classList.remove('capturing');
+        regenRunning = false;
+        if (regenQueued) { regenQueued = false; regenerateShareImage(); }
     }
 }
 
+function scheduleShareImage(delay = 250) {
+    clearTimeout(regenTimer);
+    regenTimer = setTimeout(regenerateShareImage, delay);
+}
+
+// 좌석 이름 입력·차종 변경 시 미리보기 이미지 갱신 (#bus-view는 재생성돼도 유지되는 컨테이너)
+busContainer.addEventListener('input', () => scheduleShareImage());
+busContainer.addEventListener('focusout', () => scheduleShareImage(60));
+
 const shareBtn = document.getElementById('share-btn');
 shareBtn.addEventListener('click', async () => {
-    const originalText = shareBtn.innerHTML;
-    shareBtn.innerHTML = '이미지 만드는 중... ⏳';
-    shareBtn.disabled = true;
-    try {
-        const blob = await captureBusChart();
-        const file = new File([blob], '버스_좌석표.png', { type: 'image/png' });
+    // 1) 미리 만들어 둔 이미지가 있으면 캡처 없이 즉시 공유 (제스처 유지 → 공유창 바로 뜸)
+    let blob = shareBlob;
 
-        // 1) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능)
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({ files: [file], title: '버스 좌석표' });
-                return; // 공유 성공(또는 사용자가 시트를 닫음)
-            } catch (error) {
-                if (error.name === 'AbortError') return; // 사용자가 취소
-                // 공유 실패 시에만 아래 저장 폴백으로 진행
-            }
-        }
-
-        // 2) 폴백(PC·미지원 브라우저): 이미지 파일로 저장
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '버스_좌석표.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-        alert('좌석표 이미지를 저장했어요. 카카오톡에서 사진으로 보내주세요 📷');
-    } catch (err) {
-        console.error('Error generating image:', err);
-        alert('이미지 생성 중 오류가 발생했습니다.');
-    } finally {
+    // 2) 준비 전이면(첫 진입 직후 등) 지금 만든다 — 드문 경우
+    if (!blob) {
+        const originalText = shareBtn.innerHTML;
+        shareBtn.innerHTML = '이미지 만드는 중... ⏳';
+        shareBtn.disabled = true;
+        try { blob = await captureBusChart(); shareBlob = blob; }
+        catch (e) { /* noop */ }
         shareBtn.innerHTML = originalText;
         shareBtn.disabled = false;
+        if (!blob) return;
     }
+
+    const file = new File([blob], '버스_좌석표.png', { type: 'image/png' });
+
+    // 3) 기기 공유 시트에 이미지 첨부 (카카오톡 선택 가능) — 메시지 없이 바로 공유창
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file] });
+        } catch (e) {
+            // 취소/실패 — 메시지 없이 조용히 종료
+        }
+        return;
+    }
+
+    // 4) 파일 공유 미지원(주로 PC): 메시지 없이 조용히 이미지 저장
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '버스_좌석표.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 });
+
+// 첫 진입 시 미리보기 이미지 준비 (좌석 등장 애니메이션 이후)
+scheduleShareImage(700);
