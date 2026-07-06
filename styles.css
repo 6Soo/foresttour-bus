@@ -182,52 +182,6 @@ main {
     background: #ffffff;
 }
 
-.trip-header {
-    text-align: center;
-    width: 100%;
-    margin-bottom: 0.25rem;
-}
-
-.trip-header h1 {
-    font-size: clamp(1.35rem, 6.5vw, 2.2rem);
-    font-weight: 800;
-    margin: 0 0 0.5rem 0;
-    background: linear-gradient(to right, var(--green), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    white-space: nowrap;
-    user-select: none;
-    -webkit-user-select: none;
-    pointer-events: none;
-    letter-spacing: -0.5px;
-}
-
-#trip-name {
-    font-size: 1.1rem;
-    color: var(--text-primary);
-    font-weight: 700;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    border: 1.5px dashed var(--card-border);
-    outline: none;
-    transition: all 0.2s ease;
-    display: inline-block;
-    min-width: 250px;
-    background: var(--bg-primary);
-}
-
-#trip-name:hover, #trip-name:focus {
-    border-color: var(--accent-color);
-    background: #fff;
-}
-
-#trip-name:empty::before {
-    content: attr(data-placeholder);
-    color: var(--text-secondary);
-    opacity: 0.5;
-    pointer-events: none;
-}
-
 .layout-wrapper {
     position: relative;
     padding-top: 1.5rem;
@@ -416,26 +370,16 @@ main {
 }
 
 /* ---------- html2canvas 캡처 보정 ---------- */
-.capturing .trip-header h1 {
-    background: transparent !important;
-    -webkit-text-fill-color: var(--green) !important;
-    color: var(--green) !important;
-    text-shadow: none !important;
-    white-space: nowrap;
-    font-size: clamp(1.2rem, 6vw, 2.2rem);
-}
-
-.capturing #trip-name {
-    border-color: transparent !important;
-    background: transparent !important;
-}
-
 .capturing .bus-container {
     box-shadow: none !important;
 }
 
 .capturing .seat {
     box-shadow: none !important;
+    /* fadeIn 애니메이션이 캡처에 걸려 좌석이 반투명하게 찍히는 것 방지 */
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 .capturing .seat.available {
