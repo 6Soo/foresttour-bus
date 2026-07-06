@@ -9,7 +9,7 @@
 |---|---|
 | `index.html` | **홈 허브**: 대장님용 여행 도구 카드 목록 (토스 스타일, itinerary.css 재사용) |
 | `bus.html` + `script.js` + `styles.css` | 버스 좌석표 도구 (라이트 토스 테마) |
-| `itinerary.html` + `itinerary.js` + `itinerary.css` | **바이브 일정**: 어떤 양식이든 붙여넣으면 일정표로 (붙여넣기가 유일한 시작점, 수동 입력 폐지. 편집은 다듬기 용도) |
+| `itinerary.html` + `itinerary.js` + `itinerary.css` | **바이브 일정**: 어떤 양식이든 붙여넣으면 일정표로 (붙여넣기가 유일한 시작점, 수동 입력 폐지). **별도 편집 모드 없음** — 결과 페이지가 곧 터치 편집 화면 (오브젝트 터치 시 바로 편집, 밑줄·이동/삭제 버튼은 포커스 중에만 표시, 캡처·복사 시 편집 UI 제외 + 빈 항목 정리) |
 | `import.html` + `import.js` + `import.css` | **이미지로 일정**: 이미지(OCR) → 일정 자동 변환 도구 |
 | `parse-rules.js` | **두 일정 페이지가 공유**하는 카테고리 정의(`CATS`)와 파싱 규칙(`PARSE_RULES`) |
 
