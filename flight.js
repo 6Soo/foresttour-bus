@@ -2,10 +2,40 @@
 (function () {
   "use strict";
 
-  // OCR 백엔드(flight_prep) 주소. 이 도메인에 flight_prep 서버를 배포하고,
-  // 서버 env FLIGHT_PREP_CORS_ORIGINS 에 이 사이트(https://bus.foresttour.kr)를 등록해야 한다.
-  // 사용자가 이 서버에 한 번 로그인하면(비밀번호) 이후 자격이 재사용된다(credentials:include).
-  var OCR_BASE = "https://flight.foresttour.kr";
+  // OCR 백엔드(flight_prep) 주소 — 기본값. 서버 env FLIGHT_PREP_CORS_ORIGINS 에
+  // 이 사이트(https://bus.foresttour.kr)가 등록돼 있어야 cross-origin 호출이 된다.
+  // 도메인 연결 없이도 쓰도록, 서버 주소는 localStorage로 덮어쓸 수 있다(Render 기본주소 등).
+  var OCR_BASE_DEFAULT = "https://flight.foresttour.kr";
+  var LS_BASE = "flight_ocr_base";   // 서버 주소 (예: https://flight-prep-xxxx.onrender.com)
+  var LS_PW = "flight_ocr_pw";       // 서버 접속 비밀번호(APP_PASSWORD) — 이 기기에만 저장, 소스엔 없음
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* noop */ } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { /* noop */ } }
+
+  function serverBase() { return lsGet(LS_BASE) || OCR_BASE_DEFAULT; }
+
+  // 서버 비밀번호는 사장님께 받아 한 번만 입력 → 이 기기에 저장(코드/소스엔 없음). 취소하면 null.
+  function ensurePassword() {
+    var pw = lsGet(LS_PW);
+    if (pw) return pw;
+    var input = window.prompt("항공권 인식 서버 비밀번호를 입력하세요.\n(사장님께 받은 접속 비번 — 한 번만 넣으면 이 폰이 기억해요)");
+    if (input == null) return null;
+    input = input.trim();
+    if (!input) return null;
+    lsSet(LS_PW, input);
+    return input;
+  }
+
+  // 서버 주소 바꾸기(도메인 대신 Render 기본주소를 쓰거나 이전할 때)
+  function changeServer() {
+    var url = window.prompt(
+      "항공권 인식 서버 주소를 입력하세요.\n예) https://flight-prep-xxxx.onrender.com\n또는 https://flight.foresttour.kr",
+      serverBase());
+    if (url == null) return;
+    url = url.trim().replace(/\/+$/, "");
+    if (url) { lsSet(LS_BASE, url); toast("서버 주소 저장: " + url); }
+  }
 
   var images = []; // {blob, url}
   var $ = function (id) { return document.getElementById(id); };
@@ -124,18 +154,39 @@
 
   $("go").addEventListener("click", async function () {
     if (!images.length) { toast("사진을 붙여넣어 주세요."); return; }
+    var pw = ensurePassword();
+    if (pw == null) { toast("비밀번호를 입력해야 인식할 수 있어요."); return; }
+    var base = serverBase();
     $("go").disabled = true; $("hint").textContent = "정리 중… (사진 인식은 몇 초 걸릴 수 있어요)"; $("flight-out").innerHTML = "";
     try {
       var blobs = images.map(function (im) { return im.blob; });
-      var data = await FlightPrep.analyzePaste(blobs, { baseUrl: OCR_BASE });
+      // 비밀번호를 Basic 인증 헤더로 명시 전송(credentials 재사용에 기대지 않음 → 크로스도메인 확실)
+      var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw });
       render(data);
       $("hint").textContent = "";
     } catch (e) {
       $("hint").textContent = "";
-      $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">인식 서버에 연결하지 못했어요: ' + esc(e.message) +
-        '<br>서버(' + esc(OCR_BASE) + ')가 켜져 있고 로그인돼 있는지 확인해 주세요.</div></div>';
+      var msg = String((e && e.message) || e || "");
+      if (/401|403|인증|auth/i.test(msg)) {
+        lsDel(LS_PW); // 저장된 비번이 틀렸으니 지우고 다음에 다시 묻는다
+        $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">비밀번호가 맞지 않아요. ' +
+          '"정리하기"를 다시 눌러 비밀번호를 새로 입력해 주세요.</div></div>';
+      } else {
+        $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">인식 서버에 연결하지 못했어요: ' + esc(msg) +
+          '<br>서버(' + esc(base) + ')가 켜져 있는지 확인해 주세요. 주소가 다르면 아래 <b>“서버 설정 변경”</b>에서 바꿀 수 있어요.</div></div>';
+      }
     } finally {
       $("go").disabled = false;
     }
   });
+
+  // 서버 설정 변경(주소·비밀번호) — 하단 링크
+  var cfgBtn = $("server-config");
+  if (cfgBtn) {
+    cfgBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      changeServer();
+      if (window.confirm("서버 비밀번호도 다시 설정할까요?")) { lsDel(LS_PW); ensurePassword(); }
+    });
+  }
 })();
