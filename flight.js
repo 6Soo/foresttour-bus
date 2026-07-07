@@ -168,7 +168,7 @@
 
     if (unassigned.length) {
       var card2 = document.createElement("div"); card2.className = "trip-card";
-      var note = trips.length ? "어느 여정인지 자동으로 못 붙인 여권이에요" : "여권 정보예요. 항공편 화면(가격·예약 스크린샷)도 함께 붙여넣으면 예약 링크가 나와요";
+      var note = trips.length ? "어느 여정인지 자동으로 못 붙인 여권이에요" : "여권은 읽었어요. 링크가 나오려면 날짜·노선이 필요해요 — 가격 비교 화면엔 날짜가 없어요. '8.6~11 인~시즈오카' 같은 날짜·노선 메시지를 복사해 붙여넣거나 캡처해 함께 넣어주세요";
       card2.innerHTML = '<div class="pax-head">📋 여권 정보</div><div class="section-note">' + note + ".</div>" + unassigned.map(paxHtml).join("");
       out.appendChild(card2);
     }
