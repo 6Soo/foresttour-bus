@@ -8,6 +8,25 @@
 
 #flight-out:empty { display: none; }
 
+/* 날짜·노선 안내 팁 */
+.flight-tip {
+    margin-top: 10px;
+    background: #fff8e6;
+    color: #8a6d00;
+    border-radius: 12px;
+    padding: 11px 13px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.flight-tip code, .intro code {
+    background: rgba(0,0,0,0.06);
+    border-radius: 5px;
+    padding: 1px 5px;
+    font-size: 0.92em;
+    font-family: inherit;
+    font-weight: 700;
+}
+
 /* 붙여넣은 노선·날짜 텍스트 표시(자동 수집 — 손입력 아님) */
 .pasted-note {
     display: flex;

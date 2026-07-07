@@ -15,9 +15,9 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="itinerary.css?v=20260707e">
-    <link rel="stylesheet" href="import.css?v=20260707e">
-    <link rel="stylesheet" href="flight.css?v=20260707e">
+    <link rel="stylesheet" href="itinerary.css?v=20260707f">
+    <link rel="stylesheet" href="import.css?v=20260707f">
+    <link rel="stylesheet" href="flight.css?v=20260707f">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
 <body>
@@ -41,16 +41,17 @@
             <section id="step-input">
                 <div class="intro">
                     <h1>✈️ 바이브 항공권 예약</h1>
-                    <p>여권 사진과 항공편 화면(가격·예약 스크린샷)을<br>그대로 붙여넣으면 예약 링크와 여권 정보로 정리해 드려요.<br>손으로 입력할 필요 없어요.</p>
+                    <p><b>여권</b>과 <b>날짜·노선 메시지</b>(예: <code>8.6~11 인~시즈오카</code>)를<br>그대로 붙여넣으면 예약 링크와 여권 정보로 정리해 드려요.<br>손으로 입력할 필요 없어요.</p>
                 </div>
 
                 <section class="pane">
                     <label class="dropzone" for="file-input">
                         <span class="drop-emoji">📋</span>
-                        <strong>여권 · 항공편 화면 붙여넣기</strong>
-                        <span class="drop-sub">Ctrl+V (맥 ⌘V) · 여러 장 한꺼번에 · 눌러서 갤러리 선택도 가능</span>
+                        <strong>여권 · 항공 정보 붙여넣기</strong>
+                        <span class="drop-sub">여권 사진 + <b>날짜·노선 메시지</b>(캡처 또는 복사) · 여러 장 한꺼번에 · 눌러서 갤러리 선택도 가능</span>
                         <input id="file-input" type="file" accept="image/*" multiple hidden>
                     </label>
+                    <p class="flight-tip">💡 가격 비교 화면엔 <b>날짜가 없어요.</b> 링크가 나오려면 <code>8.6~11 인~시즈오카</code> 같은 <b>날짜·노선</b>을 함께 넣어주세요 (복사→붙여넣기 또는 캡처).</p>
                     <div id="thumbs" class="thumbs"></div>
                     <div id="pasted-note" class="pasted-note" hidden></div>
                     <button id="go" class="big-btn" type="button">정리하기</button>
@@ -70,7 +71,7 @@
 
     <div id="toast" class="toast" hidden></div>
 
-    <script src="flightprep.js?v=20260707e"></script>
-    <script src="flight.js?v=20260707e"></script>
+    <script src="flightprep.js?v=20260707f"></script>
+    <script src="flight.js?v=20260707f"></script>
 </body>
 </html>
