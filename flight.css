@@ -8,8 +8,23 @@
 
 #flight-out:empty { display: none; }
 
-/* 날짜·노선 입력 */
-.flight-text { margin-bottom: 12px; }
+/* 붙여넣은 노선·날짜 텍스트 표시(자동 수집 — 손입력 아님) */
+.pasted-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--green-soft, #e7f6ef);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 13.5px;
+}
+.pasted-note .pn-label { font-weight: 800; color: var(--green-deep, #0a7a52); white-space: nowrap; }
+.pasted-note .pn-text { flex: 1; white-space: pre-wrap; word-break: break-word; color: var(--text, #191f28); }
+.pasted-note .pn-clear {
+    border: none; background: transparent; color: var(--text-weak, #8b95a1);
+    font-size: 14px; cursor: pointer; padding: 0 2px; flex-shrink: 0;
+}
 
 /* 결과 화면 상단 '새로 정리하기' 버튼 */
 .flight-back {

@@ -38,7 +38,22 @@
   }
 
   var images = []; // {blob, url}
+  var pastedText = ""; // 붙여넣은 텍스트(카톡 노선·날짜 메시지 등) — 자동 수집, 손입력 아님
   var $ = function (id) { return document.getElementById(id); };
+
+  function renderPastedNote() {
+    var el = $("pasted-note");
+    if (!el) return;
+    if (pastedText.trim()) {
+      el.hidden = false;
+      el.innerHTML = '<span class="pn-label">📝 붙여넣은 노선·날짜</span>' +
+        '<span class="pn-text"></span><button type="button" class="pn-clear" aria-label="지우기">✕</button>';
+      el.querySelector(".pn-text").textContent = pastedText.trim();
+      el.querySelector(".pn-clear").onclick = function () { pastedText = ""; renderPastedNote(); };
+    } else {
+      el.hidden = true; el.innerHTML = "";
+    }
+  }
 
   function toast(msg) {
     var t = $("toast");
@@ -64,15 +79,22 @@
     renderThumbs();
   }
 
-  // 클립보드 붙여넣기
+  // 클립보드 붙여넣기 — 이미지(여권·항공편 화면)와 텍스트(카톡 노선·날짜) 모두 자동 수집
   window.addEventListener("paste", function (e) {
-    var items = (e.clipboardData || {}).items || [];
-    var got = false;
+    var cd = e.clipboardData || {};
+    var items = cd.items || [];
+    var gotImg = false;
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
-      if (it.kind === "file" && it.type.indexOf("image/") === 0) { addImage(it.getAsFile()); got = true; }
+      if (it.kind === "file" && it.type.indexOf("image/") === 0) { addImage(it.getAsFile()); gotImg = true; }
     }
-    if (got) e.preventDefault();
+    // 입력창에 포커스가 없을 때만 텍스트를 노선 메모로 수집(다른 입력 방해 안 함)
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (!gotImg && tag !== "TEXTAREA" && tag !== "INPUT") {
+      var txt = cd.getData ? cd.getData("text/plain") : "";
+      if (txt && txt.trim()) { pastedText = (pastedText ? pastedText + "\n" : "") + txt.trim(); renderPastedNote(); }
+    }
+    if (gotImg) e.preventDefault();
   });
 
   // 드래그&드롭
@@ -146,7 +168,7 @@
 
     if (unassigned.length) {
       var card2 = document.createElement("div"); card2.className = "trip-card";
-      var note = trips.length ? "어느 여정인지 자동으로 못 붙인 여권이에요" : "여권 정보예요. 날짜·노선 메시지도 붙여넣으면 링크가 나와요";
+      var note = trips.length ? "어느 여정인지 자동으로 못 붙인 여권이에요" : "여권 정보예요. 항공편 화면(가격·예약 스크린샷)도 함께 붙여넣으면 예약 링크가 나와요";
       card2.innerHTML = '<div class="pax-head">📋 여권 정보</div><div class="section-note">' + note + ".</div>" + unassigned.map(paxHtml).join("");
       out.appendChild(card2);
     }
@@ -170,28 +192,30 @@
   }
 
   $("go").addEventListener("click", async function () {
-    var text = (($("flight-text") && $("flight-text").value) || "").trim();
-    if (!images.length && !text) { toast("여권 사진이나 날짜·노선을 넣어주세요."); return; }
+    var text = pastedText.trim(); // 자동 수집된 붙여넣기 텍스트(있으면). 손입력칸 없음.
+    if (!images.length && !text) { toast("여권·항공편 화면을 붙여넣어 주세요."); return; }
 
-    var trips = tripsFromText(text);   // 링크(여정)는 서버 없이 바로
-    var passengers = [];               // 여권 정보는 서버 OCR로
+    var trips = [];        // 여정(→링크): 서버가 이미지·텍스트에서 자동 추출
+    var passengers = [];   // 여권 정보: 서버 OCR
 
     if (images.length) {
       var pw = ensurePassword();
       if (pw == null) { toast("비밀번호를 입력해야 여권을 읽어요."); return; }
       var base = serverBase();
-      $("go").disabled = true; $("hint").textContent = "여권 읽는 중… (몇 초 걸려요)";
+      $("go").disabled = true; $("hint").textContent = "읽는 중… (사진 인식은 몇 초 걸려요)";
       try {
         var blobs = images.map(function (im) { return im.blob; });
-        // 비밀번호를 Basic 인증 헤더로 명시 전송(크로스도메인 확실)
-        var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw });
+        // 이미지(여권·항공편 화면) + 텍스트를 함께 서버로 → 여권=탑승자, 항공편 화면·메시지=여정 자동 추출
+        // 비밀번호는 Basic 인증 헤더로 명시 전송(크로스도메인 확실)
+        var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw, text: text });
+        // 여정에 붙은 탑승자는 여정 카드에 표시되고, 못 붙은 여권만 '여권 정보'로 (중복 방지)
         passengers = (data.unassigned_passengers || []).slice();
-        (data.trips || []).forEach(function (t) { if (t.passengers && t.passengers.length) passengers = passengers.concat(t.passengers); });
-        if (!trips.length && data.trips && data.trips.length) trips = data.trips; // 이미지에 노선이 있었던 경우
+        trips = (data.trips || []);
       } catch (e) {
         $("hint").textContent = ""; $("go").disabled = false;
         var msg = String((e && e.message) || e || "");
-        render({ trips: trips, unassigned_passengers: [] }); // 링크(텍스트 여정)는 있으면 함께
+        var fallback = text ? tripsFromText(text) : []; // 서버 실패해도 붙여넣은 텍스트로 링크는 만든다
+        render({ trips: fallback, unassigned_passengers: [] });
         var note = /401|403|인증|auth/i.test(msg)
           ? '비밀번호가 맞지 않아요. "새로 정리하기"로 돌아가 다시 눌러 비밀번호를 새로 입력해 주세요.' + (function () { lsDel(LS_PW); return ""; })()
           : '여권 인식 서버에 연결하지 못했어요: ' + esc(msg) + '<br>서버(' + esc(base) + ')가 켜져 있는지 확인해 주세요. (⚙️ 서버 설정 변경에서 주소 변경)';
@@ -201,6 +225,9 @@
       }
       $("hint").textContent = ""; $("go").disabled = false;
     }
+
+    // 서버가 여정을 못 뽑았는데 붙여넣은 텍스트가 있으면 클라이언트로 링크 생성(안전망)
+    if (!trips.length && text) trips = tripsFromText(text);
 
     render({ trips: trips, unassigned_passengers: passengers });
     showResult();
