@@ -15,9 +15,9 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="itinerary.css?v=20260707c">
-    <link rel="stylesheet" href="import.css?v=20260707c">
-    <link rel="stylesheet" href="flight.css?v=20260707c">
+    <link rel="stylesheet" href="itinerary.css?v=20260707d">
+    <link rel="stylesheet" href="import.css?v=20260707d">
+    <link rel="stylesheet" href="flight.css?v=20260707d">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
 <body>
@@ -37,32 +37,41 @@
         </nav>
 
         <main class="flight-main">
-            <div class="intro">
-                <h1>✈️ 바이브 항공권 예약</h1>
-                <p>여권 · 항공편 화면 · 날짜/노선 메시지를 붙여넣으면<br>여정별 예약 링크와 여권 정보를 정리해 드려요.</p>
-            </div>
+            <!-- 입력 화면 -->
+            <section id="step-input">
+                <div class="intro">
+                    <h1>✈️ 바이브 항공권 예약</h1>
+                    <p>날짜·노선을 적고, 여권 사진을 붙여넣은 뒤<br>정리하기를 누르면 예약 링크와 여권 정보로 정리해 드려요.</p>
+                </div>
 
-            <section class="pane">
-                <label class="dropzone" for="file-input">
-                    <span class="drop-emoji">📋</span>
-                    <strong>여기에 사진 붙여넣기</strong>
-                    <span class="drop-sub">Ctrl+V (맥 ⌘V) · 여러 장 한꺼번에 · 눌러서 갤러리 선택도 가능</span>
-                    <input id="file-input" type="file" accept="image/*" multiple hidden>
-                </label>
-                <div id="thumbs" class="thumbs"></div>
-                <button id="go" class="big-btn" type="button">정리하기</button>
-                <p id="hint" class="privacy-hint"></p>
-                <p class="privacy-hint">🔒 여권 인식은 비밀번호로 보호된 보안 서버에서 처리돼요. 카드번호·계좌 비밀번호·OTP는 절대 묻지도 저장하지도 않아요.</p>
-                <p class="privacy-hint"><a id="server-config" href="#" class="server-config-link">⚙️ 서버 설정 변경 (주소·비밀번호)</a></p>
+                <section class="pane">
+                    <textarea id="flight-text" class="paste-area flight-text" rows="3" placeholder="✈️ 날짜·노선 (링크 만들려면 입력)
+예: 8.6~11 인07:05~시즈오카 시18:10~인천"></textarea>
+                    <label class="dropzone" for="file-input">
+                        <span class="drop-emoji">🛂</span>
+                        <strong>여권 사진 붙여넣기</strong>
+                        <span class="drop-sub">Ctrl+V (맥 ⌘V) · 여러 장 한꺼번에 · 눌러서 갤러리 선택도 가능</span>
+                        <input id="file-input" type="file" accept="image/*" multiple hidden>
+                    </label>
+                    <div id="thumbs" class="thumbs"></div>
+                    <button id="go" class="big-btn" type="button">정리하기</button>
+                    <p id="hint" class="privacy-hint"></p>
+                    <p class="privacy-hint">🔒 여권 인식은 비밀번호로 보호된 보안 서버에서 처리돼요. 카드번호·계좌 비밀번호·OTP는 절대 묻지도 저장하지도 않아요.</p>
+                    <p class="privacy-hint"><a id="server-config" href="#" class="server-config-link">⚙️ 서버 설정 변경 (주소·비밀번호)</a></p>
+                </section>
             </section>
 
-            <div id="flight-out"></div>
+            <!-- 결과 화면 (정리하기 후) -->
+            <section id="step-result" hidden>
+                <button id="back-btn" class="flight-back" type="button">← 새로 정리하기</button>
+                <div id="flight-out"></div>
+            </section>
         </main>
     </div>
 
     <div id="toast" class="toast" hidden></div>
 
-    <script src="flightprep.js?v=20260707c"></script>
-    <script src="flight.js?v=20260707c"></script>
+    <script src="flightprep.js?v=20260707d"></script>
+    <script src="flight.js?v=20260707d"></script>
 </body>
 </html>

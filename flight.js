@@ -152,33 +152,61 @@
     }
   }
 
+  // 입력/결과 화면 전환 (정리하기 → 결과만 보이게)
+  function showResult() { $("step-input").hidden = true; $("step-result").hidden = false; window.scrollTo(0, 0); }
+  function showInput() { $("step-result").hidden = true; $("step-input").hidden = false; }
+
+  // 날짜·노선 텍스트 → 여정+링크 (서버 불필요, 클라이언트에서 파싱)
+  function tripsFromText(text) {
+    if (!text) return [];
+    return FlightPrep.parseTrips(text).map(function (t) {
+      var links = FlightPrep.buildLinks(t);
+      var ready = !!(links && links.skyscanner);
+      return {
+        label: t.label, depart: t.depart, "return": t.return || "", links: links,
+        comparison: { ready: ready, missing: ready ? [] : ["출발·도착 공항 / 가는 날"] }, passengers: [],
+      };
+    });
+  }
+
   $("go").addEventListener("click", async function () {
-    if (!images.length) { toast("사진을 붙여넣어 주세요."); return; }
-    var pw = ensurePassword();
-    if (pw == null) { toast("비밀번호를 입력해야 인식할 수 있어요."); return; }
-    var base = serverBase();
-    $("go").disabled = true; $("hint").textContent = "정리 중… (사진 인식은 몇 초 걸릴 수 있어요)"; $("flight-out").innerHTML = "";
-    try {
-      var blobs = images.map(function (im) { return im.blob; });
-      // 비밀번호를 Basic 인증 헤더로 명시 전송(credentials 재사용에 기대지 않음 → 크로스도메인 확실)
-      var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw });
-      render(data);
-      $("hint").textContent = "";
-    } catch (e) {
-      $("hint").textContent = "";
-      var msg = String((e && e.message) || e || "");
-      if (/401|403|인증|auth/i.test(msg)) {
-        lsDel(LS_PW); // 저장된 비번이 틀렸으니 지우고 다음에 다시 묻는다
-        $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">비밀번호가 맞지 않아요. ' +
-          '"정리하기"를 다시 눌러 비밀번호를 새로 입력해 주세요.</div></div>';
-      } else {
-        $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">인식 서버에 연결하지 못했어요: ' + esc(msg) +
-          '<br>서버(' + esc(base) + ')가 켜져 있는지 확인해 주세요. 주소가 다르면 아래 <b>“서버 설정 변경”</b>에서 바꿀 수 있어요.</div></div>';
+    var text = (($("flight-text") && $("flight-text").value) || "").trim();
+    if (!images.length && !text) { toast("여권 사진이나 날짜·노선을 넣어주세요."); return; }
+
+    var trips = tripsFromText(text);   // 링크(여정)는 서버 없이 바로
+    var passengers = [];               // 여권 정보는 서버 OCR로
+
+    if (images.length) {
+      var pw = ensurePassword();
+      if (pw == null) { toast("비밀번호를 입력해야 여권을 읽어요."); return; }
+      var base = serverBase();
+      $("go").disabled = true; $("hint").textContent = "여권 읽는 중… (몇 초 걸려요)";
+      try {
+        var blobs = images.map(function (im) { return im.blob; });
+        // 비밀번호를 Basic 인증 헤더로 명시 전송(크로스도메인 확실)
+        var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw });
+        passengers = (data.unassigned_passengers || []).slice();
+        (data.trips || []).forEach(function (t) { if (t.passengers && t.passengers.length) passengers = passengers.concat(t.passengers); });
+        if (!trips.length && data.trips && data.trips.length) trips = data.trips; // 이미지에 노선이 있었던 경우
+      } catch (e) {
+        $("hint").textContent = ""; $("go").disabled = false;
+        var msg = String((e && e.message) || e || "");
+        render({ trips: trips, unassigned_passengers: [] }); // 링크(텍스트 여정)는 있으면 함께
+        var note = /401|403|인증|auth/i.test(msg)
+          ? '비밀번호가 맞지 않아요. "새로 정리하기"로 돌아가 다시 눌러 비밀번호를 새로 입력해 주세요.' + (function () { lsDel(LS_PW); return ""; })()
+          : '여권 인식 서버에 연결하지 못했어요: ' + esc(msg) + '<br>서버(' + esc(base) + ')가 켜져 있는지 확인해 주세요. (⚙️ 서버 설정 변경에서 주소 변경)';
+        $("flight-out").insertAdjacentHTML("afterbegin", '<div class="trip-card"><div class="link-miss">' + note + '</div></div>');
+        showResult();
+        return;
       }
-    } finally {
-      $("go").disabled = false;
+      $("hint").textContent = ""; $("go").disabled = false;
     }
+
+    render({ trips: trips, unassigned_passengers: passengers });
+    showResult();
   });
+
+  $("back-btn").addEventListener("click", showInput);
 
   // 서버 설정 변경(주소·비밀번호) — 하단 링크
   var cfgBtn = $("server-config");

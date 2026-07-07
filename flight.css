@@ -8,6 +8,25 @@
 
 #flight-out:empty { display: none; }
 
+/* 날짜·노선 입력 */
+.flight-text { margin-bottom: 12px; }
+
+/* 결과 화면 상단 '새로 정리하기' 버튼 */
+.flight-back {
+    background: #fff;
+    border: none;
+    box-shadow: var(--shadow);
+    color: var(--text-sub, #6b7684);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 99px;
+    cursor: pointer;
+    margin: 2px 0 8px;
+}
+.flight-back:active { transform: scale(0.97); }
+
 /* 여정 카드 */
 .trip-card {
     background: var(--card);
