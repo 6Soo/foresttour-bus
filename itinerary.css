@@ -824,14 +824,7 @@ main.capturing .item-time:empty {
 
 .btn:active { transform: scale(0.97); filter: brightness(0.95); }
 
-.btn-copy {
-    background: #fff;
-    color: var(--text);
-    box-shadow: var(--shadow);
-}
-
 .btn-kakao {
-    flex: 1.35;
     background: var(--kakao);
     color: #191600;
     box-shadow: 0 4px 14px rgba(254, 229, 0, 0.35);
