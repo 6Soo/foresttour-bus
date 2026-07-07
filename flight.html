@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="숲길따라 감성여행 - 바이브 항공권 예약">
+    <meta name="theme-color" content="#f2f4f6">
+    <meta property="og:title" content="숲길따라 감성여행 · 바이브 항공권 예약">
+    <meta property="og:description" content="여권·항공편 사진을 붙여넣으면 예약 링크와 여권 정보를 정리해 드려요 ✈️">
+    <meta property="og:type" content="website">
+    <title>숲길따라 감성여행 · 바이브 항공권 예약</title>
+    <script>
+        if (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            window.location.href = "https://" + window.location.hostname + window.location.pathname + window.location.search + window.location.hash;
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <link rel="stylesheet" href="itinerary.css?v=20260706d">
+    <link rel="stylesheet" href="import.css?v=20260706d">
+    <link rel="stylesheet" href="flight.css?v=20260706d">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+</head>
+<body>
+    <div class="wrap">
+        <header class="top-bar">
+            <a href="index.html" class="brand">
+                <span class="brand-logo">🌲</span>
+                <span class="brand-name">숲길따라 감성여행</span>
+            </a>
+        </header>
+
+        <nav class="tool-nav">
+            <a href="bus.html">🚌 버스 좌석표</a>
+            <a href="itinerary.html">✨ 바이브 일정</a>
+            <a href="import.html">📷 이미지로 일정</a>
+            <a href="flight.html" class="active">✈️ 항공권 예약</a>
+        </nav>
+
+        <main class="flight-main">
+            <div class="intro">
+                <h1>✈️ 바이브 항공권 예약</h1>
+                <p>여권 · 항공편 화면 · 날짜/노선 메시지를 붙여넣으면<br>여정별 예약 링크와 여권 정보를 정리해 드려요.</p>
+            </div>
+
+            <section class="pane">
+                <label class="dropzone" for="file-input">
+                    <span class="drop-emoji">📋</span>
+                    <strong>여기에 사진 붙여넣기</strong>
+                    <span class="drop-sub">Ctrl+V (맥 ⌘V) · 여러 장 한꺼번에 · 눌러서 갤러리 선택도 가능</span>
+                    <input id="file-input" type="file" accept="image/*" multiple hidden>
+                </label>
+                <div id="thumbs" class="thumbs"></div>
+                <button id="go" class="big-btn" type="button">정리하기</button>
+                <p id="hint" class="privacy-hint"></p>
+                <p class="privacy-hint">🔒 여권 인식은 비밀번호로 보호된 보안 서버에서 처리돼요. 카드·비밀번호·OTP는 절대 입력·저장하지 않아요.</p>
+            </section>
+
+            <div id="flight-out"></div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="flightprep.js?v=20260706d"></script>
+    <script src="flight.js?v=20260706d"></script>
+</body>
+</html>

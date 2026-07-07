@@ -1,0 +1,76 @@
+/* ============================================
+   바이브 항공권 예약 페이지 전용 스타일
+   (기본 토큰/컴포넌트는 itinerary.css 재사용)
+   ============================================ */
+
+.flight-main { padding-top: 12px; }
+[hidden] { display: none !important; }
+
+#flight-out:empty { display: none; }
+
+/* 여정 카드 */
+.trip-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin-top: 14px;
+}
+
+.trip-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.trip-head .t-label { font-size: 17px; font-weight: 800; }
+.trip-head .t-dates { font-size: 13px; color: var(--text-weak); font-weight: 600; }
+
+/* 링크 버튼 */
+.link-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+.link-btn.sky { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(13, 148, 99, 0.25); }
+.link-btn.sky:active { transform: scale(0.98); }
+.link-btn.trip { background: var(--green-soft); color: var(--green-deep); }
+
+.link-miss {
+    background: #fff8e6;
+    color: #8a6d00;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+/* 탑승자 */
+.pax-head { font-size: 12px; font-weight: 800; color: var(--text-weak); margin: 14px 0 6px; }
+
+.pax {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-top: 8px;
+}
+.pax .nm { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
+.pax .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 14px; }
+.pax .kv .k { color: var(--text-weak); }
+.pax .flag {
+    margin-top: 8px;
+    color: #d64545;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.section-note { font-size: 12.5px; color: var(--text-weak); margin: 2px 2px 6px; }
+
+.privacy-hint a { color: var(--green-deep); font-weight: 700; text-decoration: none; }
