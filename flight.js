@@ -196,7 +196,8 @@
     trips.forEach(function (t, i) {
       var card = document.createElement("div"); card.className = "trip-card";
       var num = trips.length > 1 ? " " + (i + 1) : "";
-      var dates = t.depart ? '<span class="t-dates">' + esc(t.depart) + " ~ " + esc(t.return) + "</span>" : "";
+      var pax = (t.passengers && t.passengers.length) || t.pax_count || 0;
+      var dates = t.depart ? '<span class="t-dates">' + esc(t.depart) + " ~ " + esc(t.return) + (pax ? " · " + pax + "명" : "") + "</span>" : "";
       var html = '<div class="trip-head"><span class="t-label">✈️ 여정' + num + " — " + esc(t.label) + "</span>" + dates + "</div>";
 
       var ready = t.comparison ? t.comparison.ready : !!(t.links && t.links.skyscanner);
@@ -250,10 +251,11 @@
   function tripsFromText(text) {
     if (!text) return [];
     return FlightPrep.parseTrips(text).map(function (t) {
-      var links = FlightPrep.buildLinks(t);
+      var links = FlightPrep.buildLinks(t, { adults: t.paxCount || 1 });
       var ready = !!(links && links.skyscanner);
       return {
         label: t.label, depart: t.depart, "return": t.return || "", links: links,
+        pax_count: t.paxCount || 0,
         comparison: { ready: ready, missing: ready ? [] : ["출발·도착 공항 / 가는 날"] }, passengers: [],
       };
     });
@@ -271,10 +273,11 @@
         var r = raw[i];
         if (!r.depart || !r.destCode) continue;
         if (t.depart && r.depart !== t.depart) continue;
-        var adults = (t.passengers && t.passengers.length) || 1;
+        var adults = (t.passengers && t.passengers.length) || t.pax_count || r.paxCount || 1;
         var links = FlightPrep.buildLinks(r, { adults: adults });
         if (!links.skyscanner) continue;
         t.links = links;
+        if (!t.pax_count) t.pax_count = adults;
         if (!t.label || t.label === "여정") t.label = r.label;
         t.comparison = { ready: true, missing: [] };
         raw.splice(i, 1);
