@@ -114,9 +114,31 @@
     padding: 12px 14px;
     margin-top: 8px;
 }
-.pax .nm { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
+.pax .nm { font-weight: 800; font-size: 16px; margin-bottom: 8px; }
 .pax .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 14px; }
 .pax .kv .k { color: var(--text-weak); }
+
+/* 예약 폼에 넣을 값 — 눌러서 복사 */
+.copy-hint { font-size: 12.5px; color: var(--text-weak); margin: 2px 0 8px; }
+.copy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cchip {
+    display: flex; flex-direction: column; gap: 2px;
+    text-align: left; width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #f7f9fa;
+    cursor: pointer;
+    transition: background .12s, border-color .12s, transform .06s;
+    -webkit-tap-highlight-color: transparent;
+}
+.cchip:active { transform: scale(.98); }
+.cchip.copied { background: #e7f6ee; border-color: var(--green, #16a34a); }
+.cchip .cc-k { font-size: 11.5px; font-weight: 700; color: var(--text-weak); }
+.cchip .cc-v { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .2px; word-break: break-all; }
+.cchip.copied .cc-k::after { content: " ✓ 복사됨"; color: var(--green-deep, #15803d); }
+
+.pax-exp { margin-top: 8px; font-size: 12px; color: var(--text-weak); }
 .pax .flag {
     margin-top: 8px;
     color: #d64545;

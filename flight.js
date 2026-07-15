@@ -123,15 +123,64 @@
     });
   }
 
-  var PAX_ORDER = ["한글이름", "영문성", "영문이름", "생년월일", "성별", "여권만료일"];
+  // 생년월일 8자리(YYYYMMDD) → 1960.03.15 (예약 폼에 그대로 붙여넣기 좋은 표기)
+  function fmtBirth(v) {
+    var s = String(v || "").replace(/\D/g, "");
+    if (s.length !== 8) return String(v || "");
+    return s.slice(0, 4) + "." + s.slice(4, 6) + "." + s.slice(6, 8);
+  }
+  function sexKo(v) {
+    var s = String(v || "").toUpperCase().charAt(0);
+    if (s === "M") return "남성";
+    if (s === "F") return "여성";
+    return String(v || "");
+  }
+
+  // 예약 사이트 탑승객 폼 칸(성/이름/생년월일/성별)에 맞춘 "눌러서 복사" 칩.
+  // 대장님(연세 있는 사용자)이 손으로 영문 철자를 안 틀리게 — 칩을 누르면 값이 복사돼
+  // 폼 칸에 붙여넣기만 하면 됨. 사이트가 바뀌어도 안 깨지는 방식(자동입력 스크립트 대신).
+  function copyChip(label, value) {
+    var v = String(value == null ? "" : value).trim();
+    if (!v) return "";
+    return '<button type="button" class="cchip" data-copy="' + esc(v) + '">' +
+      '<span class="cc-k">' + esc(label) + "</span>" +
+      '<span class="cc-v">' + esc(v) + "</span></button>";
+  }
 
   function paxHtml(p) {
-    var rows = PAX_ORDER.map(function (k) {
-      return '<span class="k">' + k + "</span><span>" + (esc(p[k]) || "—") + "</span>";
-    }).join("");
-    var flag = p["경고"] ? '<div class="flag">⚠️ ' + esc(p["경고"]) + "</div>" : "";
     var nm = esc(p["한글이름"] || ((p["영문성"] || "") + " " + (p["영문이름"] || "")).trim()) || "탑승자";
-    return '<div class="pax"><div class="nm">' + nm + '</div><div class="kv">' + rows + "</div>" + flag + "</div>";
+    var chips = [
+      copyChip("성 (영문)", p["영문성"]),
+      copyChip("이름 (영문)", p["영문이름"]),
+      copyChip("생년월일", fmtBirth(p["생년월일"])),
+      copyChip("성별", sexKo(p["성별"])),
+    ].filter(Boolean).join("");
+    var grid = chips
+      ? '<div class="copy-hint">👇 칸을 눌러 복사 → 예약 폼에 붙여넣기</div><div class="copy-grid">' + chips + "</div>"
+      : "";
+    // 여권만료일은 확인용으로만(복사 대상 아님). 국적은 예약 폼 기본값 '대한민국' 그대로 두면 됨.
+    var exp = p["여권만료일"] ? '<div class="pax-exp">여권만료 ' + esc(p["여권만료일"]) + "</div>" : "";
+    var flag = p["경고"] ? '<div class="flag">⚠️ ' + esc(p["경고"]) + "</div>" : "";
+    return '<div class="pax"><div class="nm">' + nm + "</div>" + grid + exp + flag + "</div>";
+  }
+
+  // 눌러서 복사 (칩 위임 처리) — 클립보드 API 실패 시 textarea 폴백
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacyCopy(text); });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
   }
 
   function render(data) {
@@ -172,6 +221,25 @@
       card2.innerHTML = '<div class="pax-head">📋 여권 정보</div><div class="section-note">' + note + ".</div>" + unassigned.map(paxHtml).join("");
       out.appendChild(card2);
     }
+  }
+
+  // 탑승자 카드의 "눌러서 복사" 칩 — 결과 영역에 위임 처리
+  var outEl = $("flight-out");
+  if (outEl) {
+    outEl.addEventListener("click", function (e) {
+      var chip = e.target.closest ? e.target.closest(".cchip") : null;
+      if (!chip) return;
+      var val = chip.getAttribute("data-copy") || "";
+      copyText(val).then(function (ok) {
+        if (ok) {
+          chip.classList.add("copied");
+          setTimeout(function () { chip.classList.remove("copied"); }, 1200);
+          toast("복사됐어요: " + val + " — 예약 폼 칸에 붙여넣으세요");
+        } else {
+          toast("복사에 실패했어요. 값을 길게 눌러 직접 복사해 주세요.");
+        }
+      });
+    });
   }
 
   // 입력/결과 화면 전환 (정리하기 → 결과만 보이게)
