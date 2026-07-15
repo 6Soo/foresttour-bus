@@ -259,6 +259,30 @@
     });
   }
 
+  // 링크가 안 나온 여정을 붙여넣은 텍스트(클라이언트 최신 사전)로 보완.
+  // 같은 출발일의 텍스트 여정에서 공항을 찾으면 그 링크를 채운다 (인원수는 여정의 탑승자 수).
+  function fillMissingLinks(trips, text) {
+    if (!text || !trips.length) return;
+    var raw = FlightPrep.parseTrips(text);
+    trips.forEach(function (t) {
+      var ready = t.comparison ? t.comparison.ready : !!(t.links && t.links.skyscanner);
+      if (ready) return;
+      for (var i = 0; i < raw.length; i++) {
+        var r = raw[i];
+        if (!r.depart || !r.destCode) continue;
+        if (t.depart && r.depart !== t.depart) continue;
+        var adults = (t.passengers && t.passengers.length) || 1;
+        var links = FlightPrep.buildLinks(r, { adults: adults });
+        if (!links.skyscanner) continue;
+        t.links = links;
+        if (!t.label || t.label === "여정") t.label = r.label;
+        t.comparison = { ready: true, missing: [] };
+        raw.splice(i, 1);
+        break;
+      }
+    });
+  }
+
   $("go").addEventListener("click", async function () {
     var text = pastedText.trim(); // 자동 수집된 붙여넣기 텍스트(있으면). 손입력칸 없음.
     if (!images.length && !text) { toast("여권·항공편 화면을 붙여넣어 주세요."); return; }
@@ -296,6 +320,9 @@
 
     // 서버가 여정을 못 뽑았는데 붙여넣은 텍스트가 있으면 클라이언트로 링크 생성(안전망)
     if (!trips.length && text) trips = tripsFromText(text);
+    // 서버가 여정은 뽑았지만 링크를 못 만든 경우(서버 공항 사전이 옛 버전 등)도
+    // 붙여넣은 텍스트를 이 화면의 최신 사전으로 다시 읽어 링크를 보완한다.
+    fillMissingLinks(trips, text);
 
     render({ trips: trips, unassigned_passengers: passengers });
     showResult();
