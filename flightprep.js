@@ -100,6 +100,17 @@
     return out;
   }
 
+  // 인원수 표기 — 대장의 두 가지 습관 (서버 parser.parse_pax_count와 1:1):
+  //  "2명 8.1~5 인~고마츠" → N명 / "2,3,6,7,8,9번 11.4~8" → 번호 나열 개수(6명).
+  //  단독 "3번"(버스 번호 등)은 오탐 방지로 무시(2개 이상 나열만 인정).
+  function parsePaxCount(text) {
+    var m = /(\d+)\s*명/.exec(text || "");
+    if (m) return Math.max(1, +m[1]);
+    var e = /((?:\d+\s*[,，·]\s*)+\d+)\s*번/.exec(text || "");
+    if (e) return e[1].split(/[,，·]/).length;
+    return 0;
+  }
+
   function parseOneTrip(text, today) {
     const codes = parseAirports(text);
     const dr = parseDates(text, today);
@@ -109,6 +120,7 @@
     return {
       originCode: originCode, destCode: destCode,
       depart: depart, return: roundTrip ? ret : null, roundTrip: roundTrip,
+      paxCount: parsePaxCount(text),
       label: destCode ? cityOf(destCode) : "여정",
       route: destCode ? (cityOf(originCode) + " → " + cityOf(destCode)) : "",
     };
@@ -130,6 +142,8 @@
       const t = parseOneTrip(text.slice(startPos, endPos), today);
       if (t.depart) trips.push(t);
     }
+    // 인원수("2,3,6번"/"2명")는 첫 날짜 앞에 쓰는 습관 → 잘린 앞부분에서 보충
+    if (trips.length && !trips[0].paxCount) trips[0].paxCount = parsePaxCount(text.slice(0, matches[0].index));
     return trips;
   }
 
