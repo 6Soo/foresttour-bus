@@ -118,25 +118,39 @@
 .pax .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 14px; }
 .pax .kv .k { color: var(--text-weak); }
 
-/* 예약 폼에 넣을 값 — 눌러서 복사 */
-.copy-hint { font-size: 12.5px; color: var(--text-weak); margin: 2px 0 8px; }
+/* 예약 폼에 넣을 값 — 수정 가능 + 복사 */
+.copy-hint { font-size: 12.5px; color: var(--text-weak); margin: 2px 0 8px; line-height: 1.5; }
 .copy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cchip {
-    display: flex; flex-direction: column; gap: 2px;
-    text-align: left; width: 100%;
-    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "k k" "v c";
+    align-items: center; gap: 2px 8px;
+    padding: 10px 10px 10px 12px;
     border: 1px solid var(--line);
     border-radius: 12px;
     background: #f7f9fa;
-    cursor: pointer;
-    transition: background .12s, border-color .12s, transform .06s;
+    transition: background .12s, border-color .12s;
+}
+.cchip.copied { background: #e7f6ee; border-color: var(--green, #16a34a); }
+.cchip .cc-k { grid-area: k; font-size: 11.5px; font-weight: 700; color: var(--text-weak); }
+.cchip .cc-v {
+    grid-area: v; min-width: 0;
+    font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .2px; word-break: break-all;
+    padding: 2px 4px; margin: -2px -4px; border-radius: 6px;
+    outline: none; -webkit-tap-highlight-color: transparent;
+}
+.cchip .cc-v:focus { background: #fff; box-shadow: inset 0 0 0 2px var(--green, #16a34a); }
+.cchip .cc-v:empty::before { content: attr(data-empty); color: var(--text-weak); font-weight: 500; }
+.cchip .cc-copy {
+    grid-area: c;
+    padding: 6px 12px; border: none; border-radius: 999px;
+    background: var(--green, #0d9463); color: #fff;
+    font-size: 13px; font-weight: 800; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
-.cchip:active { transform: scale(.98); }
-.cchip.copied { background: #e7f6ee; border-color: var(--green, #16a34a); }
-.cchip .cc-k { font-size: 11.5px; font-weight: 700; color: var(--text-weak); }
-.cchip .cc-v { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .2px; word-break: break-all; }
-.cchip.copied .cc-k::after { content: " ✓ 복사됨"; color: var(--green-deep, #15803d); }
+.cchip .cc-copy:active { opacity: .8; }
+.cchip.copied .cc-copy::after { content: " ✓"; }
 
 .pax-exp { margin-top: 8px; font-size: 12px; color: var(--text-weak); }
 .pax .flag {
