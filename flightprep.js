@@ -218,39 +218,51 @@
     return {
       "한글이름": "", "영문성": m.surname, "영문이름": m.given,
       "생년월일": m.birth8, "성별": m.sex, "여권만료일": m.expiryIso,
-      "여권번호": m.passportNo || "", "경고": warn,
+      "여권번호": m.passportNo || "", "경고": warn, "_valid": !!m.valid,
     };
   }
 
   // 같은 여권을 두 번 찍어(또는 펼침면 두 장) 넣으면 탑승자가 중복되는 문제 방지.
-  // 여권번호(8자↑) 우선, 없으면 생년월일+영문성으로 동일인 판정 → 더 완전한 기록으로 병합.
-  function paxKey(p) {
+  // 두 판독본은 서로 다른 칸에서 오독이 나므로(한쪽 이름, 한쪽 생년월일) 단일 키로는 못 잡는다.
+  // → 여권번호·이름·생년월일 중 하나라도 같으면 동일인으로 병합. 병합 시 체크디지트가 맞는
+  //   (정확한) 판독본을 우선 채택하고, 빈 칸은 다른 판독본으로 보완한다.
+  var PAX_FIELDS = ["한글이름", "영문성", "영문이름", "생년월일", "성별", "여권만료일", "여권번호"];
+  function paxKeys(p) {
+    var keys = [];
     var no = String(p["여권번호"] || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (no.length >= 8) return "no:" + no;
-    var b = p["생년월일"] || "", s = String(p["영문성"] || "").toUpperCase();
-    return b && s ? "bd:" + b + ":" + s : null; // 못 정하면 합치지 않음
+    if (no.length >= 8) keys.push("no:" + no);
+    var s = String(p["영문성"] || "").toUpperCase().trim();
+    var g = String(p["영문이름"] || "").toUpperCase().replace(/\s+/g, "").trim();
+    var b = p["생년월일"] || "";
+    if (s && g) keys.push("nm:" + s + "|" + g);
+    if (b && s) keys.push("bd:" + b + "|" + s);
+    return keys;
   }
   function paxFullness(p) {
     return ["영문성", "영문이름", "생년월일", "성별", "여권만료일"].reduce(function (n, k) { return n + (p[k] ? 1 : 0); }, 0);
   }
+  // 우선순위: 체크디지트 유효(정확) > 채워진 필드 수
+  function betterPax(a, b) {
+    if (!!a._valid !== !!b._valid) return a._valid ? a : b;
+    return paxFullness(a) >= paxFullness(b) ? a : b;
+  }
   function dedupPassengers(list) {
-    var idx = {}, out = [];
+    var seen = {}, groups = [];
     list.forEach(function (p) {
-      var k = paxKey(p);
-      if (k && idx[k] != null) {
-        var ex = out[idx[k]];
-        var keep = paxFullness(p) > paxFullness(ex) ? p : ex, fill = keep === p ? ex : p;
-        ["한글이름", "영문성", "영문이름", "생년월일", "성별", "여권만료일", "여권번호"].forEach(function (f) {
-          keep[f] = keep[f] || fill[f];
-        });
+      var keys = paxKeys(p), gi = -1;
+      for (var i = 0; i < keys.length; i++) { if (seen[keys[i]] != null) { gi = seen[keys[i]]; break; } }
+      if (gi >= 0) {
+        var ex = groups[gi];
+        var keep = betterPax(p, ex), fill = keep === p ? ex : p;
+        PAX_FIELDS.forEach(function (f) { keep[f] = keep[f] || fill[f]; });
         if (!keep["경고"]) keep["경고"] = fill["경고"];
-        out[idx[k]] = keep;
-        return;
+        groups[gi] = keep;
+      } else {
+        gi = groups.length; groups.push(p);
       }
-      if (k) idx[k] = out.length;
-      out.push(p);
+      paxKeys(groups[gi]).forEach(function (k) { seen[k] = gi; }); // 병합 후 키 재등록
     });
-    return out;
+    return groups;
   }
 
   // OCR 전 전처리: 작으면 확대(글자 크게) + 흑백·대비 강화 → MRZ의 '<' 인식률↑.
