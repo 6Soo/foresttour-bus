@@ -218,8 +218,68 @@
     return {
       "한글이름": "", "영문성": m.surname, "영문이름": m.given,
       "생년월일": m.birth8, "성별": m.sex, "여권만료일": m.expiryIso,
-      "경고": warn,
+      "여권번호": m.passportNo || "", "경고": warn,
     };
+  }
+
+  // 같은 여권을 두 번 찍어(또는 펼침면 두 장) 넣으면 탑승자가 중복되는 문제 방지.
+  // 여권번호(8자↑) 우선, 없으면 생년월일+영문성으로 동일인 판정 → 더 완전한 기록으로 병합.
+  function paxKey(p) {
+    var no = String(p["여권번호"] || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (no.length >= 8) return "no:" + no;
+    var b = p["생년월일"] || "", s = String(p["영문성"] || "").toUpperCase();
+    return b && s ? "bd:" + b + ":" + s : null; // 못 정하면 합치지 않음
+  }
+  function paxFullness(p) {
+    return ["영문성", "영문이름", "생년월일", "성별", "여권만료일"].reduce(function (n, k) { return n + (p[k] ? 1 : 0); }, 0);
+  }
+  function dedupPassengers(list) {
+    var idx = {}, out = [];
+    list.forEach(function (p) {
+      var k = paxKey(p);
+      if (k && idx[k] != null) {
+        var ex = out[idx[k]];
+        var keep = paxFullness(p) > paxFullness(ex) ? p : ex, fill = keep === p ? ex : p;
+        ["한글이름", "영문성", "영문이름", "생년월일", "성별", "여권만료일", "여권번호"].forEach(function (f) {
+          keep[f] = keep[f] || fill[f];
+        });
+        if (!keep["경고"]) keep["경고"] = fill["경고"];
+        out[idx[k]] = keep;
+        return;
+      }
+      if (k) idx[k] = out.length;
+      out.push(p);
+    });
+    return out;
+  }
+
+  // OCR 전 전처리: 작으면 확대(글자 크게) + 흑백·대비 강화 → MRZ의 '<' 인식률↑.
+  // 실패하면 원본 파일 그대로 사용(안전).
+  function preprocess(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var scale = img.width < 1500 ? Math.min(3, 1500 / img.width) : 1;
+          var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+          var cx = cv.getContext("2d");
+          cx.drawImage(img, 0, 0, w, h);
+          var id = cx.getImageData(0, 0, w, h), d = id.data;
+          for (var i = 0; i < d.length; i += 4) {
+            var g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            g = (g - 128) * 1.5 + 128;           // 대비 강화
+            g = g < 0 ? 0 : g > 255 ? 255 : g;
+            d[i] = d[i + 1] = d[i + 2] = g;
+          }
+          cx.putImageData(id, 0, 0);
+          URL.revokeObjectURL(img.src);
+          resolve(cv);
+        } catch (e) { URL.revokeObjectURL(img.src); resolve(file); }
+      };
+      img.onerror = function () { resolve(file); };
+      img.src = URL.createObjectURL(file);
+    });
   }
 
   // files → { passengers:[dict], nonPassports:[File] }. MRZ 못 읽은 이미지는 nonPassports로.
@@ -247,14 +307,15 @@
       onProgress("여권 읽는 중… (" + (i + 1) + "/" + files.length + ")", 0.25 + (i / files.length) * 0.7);
       var m = null;
       try {
-        var r = await worker.recognize(files[i]);
+        var src = await preprocess(files[i]);
+        var r = await worker.recognize(src);
         m = global.MRZ.parseMrz((r && r.data && r.data.text) || "", today);
       } catch (e) { m = null; }
       if (m && (m.surname || m.given) && m.birth8) passengers.push(mrzToPassenger(m, today));
       else nonPassports.push(files[i]);
     }
     await worker.terminate();
-    return { passengers: passengers, nonPassports: nonPassports };
+    return { passengers: dedupPassengers(passengers), nonPassports: nonPassports };
   }
 
   global.FlightPrep = {

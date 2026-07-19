@@ -136,28 +136,29 @@
     return String(v || "");
   }
 
-  // 예약 사이트 탑승객 폼 칸(성/이름/생년월일/성별)에 맞춘 "눌러서 복사" 칩.
-  // 대장님(연세 있는 사용자)이 손으로 영문 철자를 안 틀리게 — 칩을 누르면 값이 복사돼
-  // 폼 칸에 붙여넣기만 하면 됨. 사이트가 바뀌어도 안 깨지는 방식(자동입력 스크립트 대신).
-  function copyChip(label, value) {
+  // 예약 사이트 탑승객 폼 칸(성/이름/생년월일/성별)에 맞춘 칩.
+  // 값은 직접 고칠 수 있고(여권 보고 확인·수정), '복사'를 누르면 현재 값이 복사돼
+  // 예약 폼 칸에 붙여넣기만 하면 됨. 사이트가 바뀌어도 안 깨지는 방식(자동입력 스크립트 대신).
+  // OCR이 100%일 수 없어(특히 이름 철자) 수정 가능하게 둔 것 — 예약엔 정확한 이름이 필수.
+  function copyChip(label, value, hint) {
     var v = String(value == null ? "" : value).trim();
-    if (!v) return "";
-    return '<button type="button" class="cchip" data-copy="' + esc(v) + '">' +
+    return '<div class="cchip">' +
       '<span class="cc-k">' + esc(label) + "</span>" +
-      '<span class="cc-v">' + esc(v) + "</span></button>";
+      '<span class="cc-v" contenteditable="true" spellcheck="false" autocapitalize="characters" ' +
+      'data-empty="' + esc(hint || "여권 보고 입력") + '">' + esc(v) + "</span>" +
+      '<button type="button" class="cc-copy">복사</button></div>';
   }
 
   function paxHtml(p) {
     var nm = esc(p["한글이름"] || ((p["영문성"] || "") + " " + (p["영문이름"] || "")).trim()) || "탑승자";
     var chips = [
-      copyChip("성 (영문)", p["영문성"]),
-      copyChip("이름 (영문)", p["영문이름"]),
-      copyChip("생년월일", fmtBirth(p["생년월일"])),
-      copyChip("성별", sexKo(p["성별"])),
-    ].filter(Boolean).join("");
-    var grid = chips
-      ? '<div class="copy-hint">👇 칸을 눌러 복사 → 예약 폼에 붙여넣기</div><div class="copy-grid">' + chips + "</div>"
-      : "";
+      copyChip("성 (영문)", p["영문성"], "예: KIM"),
+      copyChip("이름 (영문)", p["영문이름"], "예: MIOK"),
+      copyChip("생년월일", fmtBirth(p["생년월일"]), "예: 1960.03.15"),
+      copyChip("성별", sexKo(p["성별"]), "남성/여성"),
+    ].join("");
+    var grid = '<div class="copy-hint">✏️ 여권과 다르면 값을 눌러 고치고 → <b>복사</b> → 예약 폼에 붙여넣기</div>' +
+      '<div class="copy-grid">' + chips + "</div>";
     // 여권만료일은 확인용으로만(복사 대상 아님). 국적은 예약 폼 기본값 '대한민국' 그대로 두면 됨.
     var exp = p["여권만료일"] ? '<div class="pax-exp">여권만료 ' + esc(p["여권만료일"]) + "</div>" : "";
     var flag = p["경고"] ? '<div class="flag">⚠️ ' + esc(p["경고"]) + "</div>" : "";
@@ -224,13 +225,16 @@
     }
   }
 
-  // 탑승자 카드의 "눌러서 복사" 칩 — 결과 영역에 위임 처리
+  // 탑승자 카드의 '복사' 버튼 — 현재(수정 반영된) 값을 복사. 결과 영역에 위임 처리.
   var outEl = $("flight-out");
   if (outEl) {
     outEl.addEventListener("click", function (e) {
-      var chip = e.target.closest ? e.target.closest(".cchip") : null;
-      if (!chip) return;
-      var val = chip.getAttribute("data-copy") || "";
+      var btn = e.target.closest ? e.target.closest(".cc-copy") : null;
+      if (!btn) return;
+      var chip = btn.closest(".cchip");
+      var vEl = chip && chip.querySelector(".cc-v");
+      var val = vEl ? (vEl.textContent || "").trim() : "";
+      if (!val) { toast("먼저 값을 입력해 주세요 (여권 보고)."); if (vEl) vEl.focus(); return; }
       copyText(val).then(function (ok) {
         if (ok) {
           chip.classList.add("copied");
@@ -286,6 +290,19 @@
     });
   }
 
+  // 여정의 링크를 지정 인원수로 다시 만든다(붙여넣은 텍스트의 같은 출발일 노선 기준).
+  function setTripAdults(trip, text, adults) {
+    var raw = text ? FlightPrep.parseTrips(text) : [];
+    for (var i = 0; i < raw.length; i++) {
+      var r = raw[i];
+      if (!r.destCode) continue;
+      if (trip.depart && r.depart !== trip.depart) continue;
+      var lk = FlightPrep.buildLinks(r, { adults: adults });
+      if (lk.skyscanner) { trip.links = lk; trip.comparison = { ready: true, missing: [] }; return true; }
+    }
+    return false;
+  }
+
   $("go").addEventListener("click", async function () {
     var text = pastedText.trim(); // 자동 수집된 붙여넣기 텍스트(있으면). 손입력칸 없음.
     if (!images.length && !text) { toast("여권·항공편 화면을 붙여넣어 주세요."); return; }
@@ -330,8 +347,15 @@
 
     fillMissingLinks(trips, text);
 
-    // 탑승자 붙이기: 여정이 하나면 그 여정에, 여러 개면 '여권 정보'로 따로
-    if (trips.length === 1 && passengers.length) { trips[0].passengers = passengers; passengers = []; }
+    // 탑승자 붙이기: 여정이 하나면 그 여정에, 여러 개면 '여권 정보'로 따로.
+    // 링크 인원은 '읽은 여권 수'와 '텍스트 인원(3명 등)' 중 큰 값으로 맞춘다.
+    if (trips.length === 1 && passengers.length) {
+      var t0 = trips[0];
+      t0.passengers = passengers;
+      var adults = Math.max(passengers.length, t0.pax_count || 0);
+      if (adults !== (t0.pax_count || 0)) { t0.pax_count = adults; setTripAdults(t0, text, adults); }
+      passengers = [];
+    }
 
     if (!trips.length && !passengers.length) {
       var why = mrzFailed

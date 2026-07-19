@@ -111,13 +111,22 @@
     return best;
   }
 
+  // 이름 조각 정리: '<' → 공백, 다중공백 축소, 그리고 끝에 붙은 채움문자 오독 제거.
+  // MRZ 뒷부분은 '<'로 채워지는데 OCR이 이를 같은 글자(LLL·DDD 등)로 읽어 이름 끝에 붙는다.
+  // 같은 글자 3연속 이상으로 끝나면(실제 이름엔 거의 없음) 그 덩어리를 제거: MEJALLL→MEJA.
+  function cleanNamePart(s) {
+    var t = (s || "").replace(/</g, " ").replace(/\s+/g, " ").trim();
+    t = t.replace(/([A-Z])\1{2,}$/, "").trim();
+    return t;
+  }
+
   function parseName(line1) {
-    // 위치 5부터 이름 필드 (발급국 3자리 다음)
-    var nameField = line1.slice(5);
+    // 이름 필드 시작점: 발급국(우리 사용자는 항상 KOR) 다음. 못 찾으면 위치 5(P+종류+국가) 폴백.
+    // KOR 기준으로 잡으면 앞쪽 잡음(예: 'RCHOI'의 R)을 흡수하지 않는다.
+    var kor = line1.indexOf("KOR");
+    var nameField = kor >= 0 && kor <= 5 ? line1.slice(kor + 3) : line1.slice(5);
     var parts = nameField.split("<<");
-    var surname = (parts[0] || "").replace(/</g, " ").trim();
-    var given = (parts[1] || "").replace(/</g, " ").replace(/\s+/g, " ").trim();
-    return { surname: surname, given: given };
+    return { surname: cleanNamePart(parts[0]), given: cleanNamePart(parts[1]) };
   }
 
   // 메인: 원문 텍스트 → 여권 정보 객체 (못 찾으면 null)
