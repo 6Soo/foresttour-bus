@@ -290,42 +290,60 @@
     var text = pastedText.trim(); // 자동 수집된 붙여넣기 텍스트(있으면). 손입력칸 없음.
     if (!images.length && !text) { toast("여권·항공편 화면을 붙여넣어 주세요."); return; }
 
-    var trips = [];        // 여정(→링크): 서버가 이미지·텍스트에서 자동 추출
-    var passengers = [];   // 여권 정보: 서버 OCR
+    var trips = [];
+    var passengers = [];       // 여권 정보 (MRZ 로컬 인식 우선)
+    var leftover = [];         // 여권으로 못 읽은 이미지(항공 화면 등)
+    var mrzFailed = false;
 
     if (images.length) {
-      var pw = ensurePassword();
-      if (pw == null) { toast("비밀번호를 입력해야 여권을 읽어요."); return; }
-      var base = serverBase();
-      $("go").disabled = true; $("hint").textContent = "읽는 중… (사진 인식은 몇 초 걸려요)";
+      var blobs = images.map(function (im) { return im.blob; });
+      $("go").disabled = true;
       try {
-        var blobs = images.map(function (im) { return im.blob; });
-        // 이미지(여권·항공편 화면) + 텍스트를 함께 서버로 → 여권=탑승자, 항공편 화면·메시지=여정 자동 추출
-        // 비밀번호는 Basic 인증 헤더로 명시 전송(크로스도메인 확실)
-        var data = await FlightPrep.analyzePaste(blobs, { baseUrl: base, username: "admin", password: pw, text: text });
-        // 여정에 붙은 탑승자는 여정 카드에 표시되고, 못 붙은 여권만 '여권 정보'로 (중복 방지)
-        passengers = (data.unassigned_passengers || []).slice();
-        trips = (data.trips || []);
+        // 1) 폰 안에서 여권 MRZ 직접 인식 — 서버·비밀번호 불필요, 이미지 전송 없음
+        var local = await FlightPrep.readPassports(blobs, {
+          onProgress: function (msg, ratio) { $("hint").textContent = msg; },
+        });
+        passengers = local.passengers;
+        leftover = local.nonPassports;
       } catch (e) {
-        $("hint").textContent = ""; $("go").disabled = false;
-        var msg = String((e && e.message) || e || "");
-        var fallback = text ? tripsFromText(text) : []; // 서버 실패해도 붙여넣은 텍스트로 링크는 만든다
-        render({ trips: fallback, unassigned_passengers: [] });
-        var note = /401|403|인증|auth/i.test(msg)
-          ? '비밀번호가 맞지 않아요. "새로 정리하기"로 돌아가 다시 눌러 비밀번호를 새로 입력해 주세요.' + (function () { lsDel(LS_PW); return ""; })()
-          : '여권 인식 서버에 연결하지 못했어요: ' + esc(msg) + '<br>서버(' + esc(base) + ')가 켜져 있는지 확인해 주세요. (⚙️ 서버 설정 변경에서 주소 변경)';
-        $("flight-out").insertAdjacentHTML("afterbegin", '<div class="trip-card"><div class="link-miss">' + note + '</div></div>');
-        showResult();
-        return;
+        mrzFailed = true; leftover = blobs; // 판독기 로드 실패 등 → 전부 서버 후보로
       }
       $("hint").textContent = ""; $("go").disabled = false;
     }
 
-    // 서버가 여정을 못 뽑았는데 붙여넣은 텍스트가 있으면 클라이언트로 링크 생성(안전망)
-    if (!trips.length && text) trips = tripsFromText(text);
-    // 서버가 여정은 뽑았지만 링크를 못 만든 경우(서버 공항 사전이 옛 버전 등)도
-    // 붙여넣은 텍스트를 이 화면의 최신 사전으로 다시 읽어 링크를 보완한다.
+    // 2) 링크: 붙여넣은 날짜·노선 텍스트로 생성 (서버 불필요)
+    if (text) trips = tripsFromText(text);
+
+    // 3) 텍스트로 링크를 못 만들었고, 여권 아닌 이미지가 남았고, 서버가 설정돼 있을 때만
+    //    항공 화면 전사를 위해 서버 호출(선택). 비밀번호가 저장돼 있을 때만 조용히 시도.
+    if (!trips.length && leftover.length && lsGet(LS_PW)) {
+      $("go").disabled = true; $("hint").textContent = "항공 화면 읽는 중…";
+      try {
+        var data = await FlightPrep.analyzePaste(leftover, {
+          baseUrl: serverBase(), username: "admin", password: lsGet(LS_PW), text: text,
+        });
+        trips = data.trips || [];
+        passengers = passengers.concat(data.unassigned_passengers || []);
+      } catch (e) { /* 서버 실패해도 MRZ 결과로 진행 */ }
+      $("hint").textContent = ""; $("go").disabled = false;
+    }
+
     fillMissingLinks(trips, text);
+
+    // 탑승자 붙이기: 여정이 하나면 그 여정에, 여러 개면 '여권 정보'로 따로
+    if (trips.length === 1 && passengers.length) { trips[0].passengers = passengers; passengers = []; }
+
+    if (!trips.length && !passengers.length) {
+      var why = mrzFailed
+        ? "여권 판독기를 불러오지 못했어요. 잠시 후 다시 시도하거나, 날짜·노선을 붙여넣어 주세요."
+        : (images.length
+          ? "여권을 읽지 못했어요. MRZ(여권 맨 아래 <<< 두 줄)가 선명하게 보이게 다시 찍어주세요."
+          : "여권 사진이나 날짜·노선 메시지를 붙여넣어 주세요.");
+      render({ trips: [], unassigned_passengers: [] });
+      $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">' + esc(why) + "</div></div>";
+      showResult();
+      return;
+    }
 
     render({ trips: trips, unassigned_passengers: passengers });
     showResult();

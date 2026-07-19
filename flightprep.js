@@ -194,5 +194,71 @@
     return data;
   }
 
-  global.FlightPrep = { AIRPORTS: AIRPORTS, cityOf: cityOf, parseTrips: parseTrips, buildLinks: buildLinks, analyzePaste: analyzePaste };
+  // ── 여권 MRZ 로컬 인식 (서버·비밀번호 불필요, 이미지는 폰 밖으로 안 나감) ──────
+  var TESSERACT_CDN = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) return resolve();
+      var s = document.createElement("script");
+      s.src = src; s.onload = resolve; s.onerror = function () { reject(new Error("스크립트 로드 실패")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // MRZ 결과 → 화면용(한글키) 탑승자 dict. 여권 표시용 키를 서버 응답과 동일하게 맞춘다.
+  function mrzToPassenger(m, today) {
+    var warn = "";
+    if (m.expiryIso) {
+      var exp = new Date(m.expiryIso), ref = today || new Date();
+      var sixMonths = new Date(ref.getFullYear(), ref.getMonth() + 6, ref.getDate());
+      if (exp < ref) warn = "여권 만료됨 — 재발급 필요";
+      else if (exp < sixMonths) warn = "여권 만료 6개월 이내 — 확인 필요";
+    }
+    if (!m.valid && !warn) warn = "여권 판독이 불확실해요 — 값 확인 필요";
+    return {
+      "한글이름": "", "영문성": m.surname, "영문이름": m.given,
+      "생년월일": m.birth8, "성별": m.sex, "여권만료일": m.expiryIso,
+      "경고": warn,
+    };
+  }
+
+  // files → { passengers:[dict], nonPassports:[File] }. MRZ 못 읽은 이미지는 nonPassports로.
+  async function readPassports(files, opts) {
+    opts = opts || {};
+    var onProgress = opts.onProgress || function () {};
+    var today = opts.today || new Date();
+    if (!global.MRZ) throw new Error("MRZ 모듈이 없습니다.");
+    if (!global.Tesseract) { onProgress("여권 판독기 불러오는 중…", 0.02); await loadScript(TESSERACT_CDN); }
+    onProgress("여권 판독기 준비 중… (처음 한 번만)", 0.05);
+    var worker = await global.Tesseract.createWorker("eng", 1, {
+      logger: function (mm) {
+        if (mm.status === "loading language traineddata" || mm.status === "loading tesseract core") {
+          onProgress("여권 판독기 준비 중… (처음 한 번만)", 0.05 + (mm.progress || 0) * 0.15);
+        }
+      },
+    });
+    // MRZ는 A-Z, 0-9, '<' 뿐 — 화이트리스트로 오독을 줄임
+    await worker.setParameters({
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<",
+      tessedit_pageseg_mode: "6",
+    });
+    var passengers = [], nonPassports = [];
+    for (var i = 0; i < files.length; i++) {
+      onProgress("여권 읽는 중… (" + (i + 1) + "/" + files.length + ")", 0.25 + (i / files.length) * 0.7);
+      var m = null;
+      try {
+        var r = await worker.recognize(files[i]);
+        m = global.MRZ.parseMrz((r && r.data && r.data.text) || "", today);
+      } catch (e) { m = null; }
+      if (m && (m.surname || m.given) && m.birth8) passengers.push(mrzToPassenger(m, today));
+      else nonPassports.push(files[i]);
+    }
+    await worker.terminate();
+    return { passengers: passengers, nonPassports: nonPassports };
+  }
+
+  global.FlightPrep = {
+    AIRPORTS: AIRPORTS, cityOf: cityOf, parseTrips: parseTrips, buildLinks: buildLinks,
+    analyzePaste: analyzePaste, readPassports: readPassports,
+  };
 })(window);
