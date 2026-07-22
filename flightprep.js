@@ -111,8 +111,13 @@
     return 0;
   }
 
+  // 대장은 국외 목적지만 적는 습관이 있음(예: "9.23~27 후쿠오카"). 우리 여행은 늘 한국 출발이라
+  // 공항이 하나만 잡히고 그게 국외 공항이면 출발지를 인천(ICN)으로 보완한다.
+  const KOREA_AIRPORTS = { ICN: 1, GMP: 1, CJU: 1, PUS: 1 };
+
   function parseOneTrip(text, today) {
-    const codes = parseAirports(text);
+    let codes = parseAirports(text);
+    if (codes.length === 1 && !KOREA_AIRPORTS[codes[0]]) codes = ["ICN", codes[0]];
     const dr = parseDates(text, today);
     const depart = dr[0], ret = dr[1];
     const roundTrip = codes.length >= 4 || ret != null;
