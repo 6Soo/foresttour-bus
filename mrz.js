@@ -179,7 +179,54 @@
     };
   }
 
-  var api = { parseMrz: parseMrz, checkDigit: checkDigit, findLines: findLines };
+  // ── 여권 윗부분(인쇄 영역) 파서 — MRZ가 안 보일 때(사진에서 잘림) 폴백 ──────────
+  // 여권 데이터면의 영문 라벨(Surname/Given names/Date of birth/Sex/Date of expiry/Passport No.)을
+  // 기준으로 값을 읽는다. 한국 여권은 라벨이 한/영 병기라 영문 라벨로 앵커링.
+  var MONTHS = { JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6, JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12 };
+  function parseVisualDate(s) {
+    // "10 1월/JAN 1961" 같은 표기 — 한국월(N월) 제거 후 일/영문월/연도를 각각 추출
+    var u = String(s || "").toUpperCase().replace(/[0-9]+\s*월/g, " ");
+    var mon = u.match(/JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/);
+    var year = u.match(/(?:19|20)\d{2}/);
+    var day = u.match(/(^|[^0-9])(\d{1,2})(?![0-9])/);
+    if (!mon || !year || !day) return null;
+    var mm = MONTHS[mon[0]], dd = +day[2];
+    if (dd < 1 || dd > 31) return null;
+    return { iso: year[0] + "-" + pad(mm) + "-" + pad(dd), y8: year[0] + pad(mm) + pad(dd) };
+  }
+
+  function parseVisualPassport(text) {
+    var lines = String(text || "").split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    function valAfter(labelRe) {
+      for (var i = 0; i < lines.length; i++) {
+        var m = lines[i].match(labelRe);
+        if (!m) continue;
+        var rest = lines[i].slice(m.index + m[0].length).replace(/^[^0-9A-Za-z가-힣]+/, "").trim();
+        if (rest) return rest;
+        if (i + 1 < lines.length) return lines[i + 1].trim();
+      }
+      return "";
+    }
+    var surname = cleanNamePart(valAfter(/SURNAME/i).toUpperCase());
+    var given = cleanNamePart(valAfter(/GIVEN\s*NAMES?/i).toUpperCase());
+    var sexRaw = valAfter(/\bSEX\b/i).toUpperCase();
+    var sm = sexRaw.match(/[MF]/);
+    var sex = sm ? sm[0] : "";
+    var birth = parseVisualDate(valAfter(/DATE\s*OF\s*BIRTH/i));
+    var expiry = parseVisualDate(valAfter(/DATE\s*OF\s*EXPIRY/i));
+    // 여권번호는 '영문1 + 숫자1 + 영숫자6~7' 패턴만 인정(오추출 방지 — 틀린 번호는 잘못된 중복병합 유발)
+    var pmatch = valAfter(/PASSPORT\s*NO/i).toUpperCase().match(/[A-Z][0-9][A-Z0-9]{6,7}/);
+    var passportNo = pmatch ? pmatch[0] : "";
+    // 최소 조건: 이름(성 또는 이름) + 생년월일이 있어야 탑승자로 인정
+    if (!(surname || given) || !birth) return null;
+    return {
+      surname: surname, given: given, passportNo: passportNo, nationality: "KOR",
+      birth8: birth.y8, birthIso: birth.iso, sex: sex, expiryIso: expiry ? expiry.iso : "",
+      valid: false, source: "visual",
+    };
+  }
+
+  var api = { parseMrz: parseMrz, parseVisualPassport: parseVisualPassport, checkDigit: checkDigit, findLines: findLines };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.MRZ = api;
 })(typeof self !== "undefined" ? self : this);

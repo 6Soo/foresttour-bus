@@ -219,7 +219,8 @@
       if (exp < ref) warn = "여권 만료됨 — 재발급 필요";
       else if (exp < sixMonths) warn = "여권 만료 6개월 이내 — 확인 필요";
     }
-    if (!m.valid && !warn) warn = "여권 판독이 불확실해요 — 값 확인 필요";
+    if (!warn && m.source === "visual") warn = "여권 아래(MRZ)가 안 보여 윗부분에서 읽었어요 — 값 확인하세요";
+    else if (!m.valid && !warn) warn = "여권 판독이 불확실해요 — 값 확인 필요";
     return {
       "한글이름": "", "영문성": m.surname, "영문이름": m.given,
       "생년월일": m.birth8, "성별": m.sex, "여권만료일": m.expiryIso,
@@ -260,7 +261,8 @@
         var ex = groups[gi];
         var keep = betterPax(p, ex), fill = keep === p ? ex : p;
         PAX_FIELDS.forEach(function (f) { keep[f] = keep[f] || fill[f]; });
-        if (!keep["경고"]) keep["경고"] = fill["경고"];
+        // 채택본이 유효(정확)하면 다른 판독본의 경고(예: 'MRZ 안 보임')를 물려받지 않는다
+        if (!keep["경고"] && !keep._valid) keep["경고"] = fill["경고"];
         groups[gi] = keep;
       } else {
         gi = groups.length; groups.push(p);
@@ -319,16 +321,29 @@
       tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<",
       tessedit_pageseg_mode: "6",
     });
+    var MRZ_PARAMS = { tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<", tessedit_pageseg_mode: "6" };
+    var VIS_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "3" };
+    function okPax(x) { return x && (x.surname || x.given) && x.birth8; }
+
     var passengers = [], nonPassports = [];
     for (var i = 0; i < files.length; i++) {
       onProgress("여권 읽는 중… (" + (i + 1) + "/" + files.length + ")", 0.25 + (i / files.length) * 0.7);
-      var m = null;
+      var src, m = null;
       try {
-        var src = await preprocess(files[i]);
+        src = await preprocess(files[i]);
         var r = await worker.recognize(src);
         m = global.MRZ.parseMrz((r && r.data && r.data.text) || "", today);
       } catch (e) { m = null; }
-      if (m && (m.surname || m.given) && m.birth8) passengers.push(mrzToPassenger(m, today));
+      if (okPax(m)) { passengers.push(mrzToPassenger(m, today)); continue; }
+      // MRZ가 안 보이거나 못 읽으면 → 여권 윗부분(인쇄 영역)으로 폴백 (화이트리스트 해제, 전체 인식)
+      var v = null;
+      try {
+        await worker.setParameters(VIS_PARAMS);
+        var rv = await worker.recognize(src || files[i]);
+        v = global.MRZ.parseVisualPassport((rv && rv.data && rv.data.text) || "");
+        await worker.setParameters(MRZ_PARAMS); // 다음 이미지를 위해 복원
+      } catch (e2) { v = null; try { await worker.setParameters(MRZ_PARAMS); } catch (e3) {} }
+      if (okPax(v)) passengers.push(mrzToPassenger(v, today));
       else nonPassports.push(files[i]);
     }
     await worker.terminate();
