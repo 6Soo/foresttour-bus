@@ -325,6 +325,17 @@
     var VIS_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "3" };
     function okPax(x) { return x && (x.surname || x.given) && x.birth8; }
 
+    // 여권 윗부분(인쇄 영역) 1회 OCR — 화이트리스트 해제 후 인식, 파라미터는 MRZ용으로 복원
+    async function visualPass(src) {
+      try {
+        await worker.setParameters(VIS_PARAMS);
+        var rv = await worker.recognize(src);
+        var v = global.MRZ.parseVisualPassport((rv && rv.data && rv.data.text) || "");
+        await worker.setParameters(MRZ_PARAMS);
+        return v;
+      } catch (e) { try { await worker.setParameters(MRZ_PARAMS); } catch (e2) {} return null; }
+    }
+
     var passengers = [], nonPassports = [];
     for (var i = 0; i < files.length; i++) {
       onProgress("여권 읽는 중… (" + (i + 1) + "/" + files.length + ")", 0.25 + (i / files.length) * 0.7);
@@ -333,16 +344,27 @@
         src = await preprocess(files[i]);
         var r = await worker.recognize(src);
         m = global.MRZ.parseMrz((r && r.data && r.data.text) || "", today);
-      } catch (e) { m = null; }
-      if (okPax(m)) { passengers.push(mrzToPassenger(m, today)); continue; }
-      // MRZ가 안 보이거나 못 읽으면 → 여권 윗부분(인쇄 영역)으로 폴백 (화이트리스트 해제, 전체 인식)
-      var v = null;
-      try {
-        await worker.setParameters(VIS_PARAMS);
-        var rv = await worker.recognize(src || files[i]);
-        v = global.MRZ.parseVisualPassport((rv && rv.data && rv.data.text) || "");
-        await worker.setParameters(MRZ_PARAMS); // 다음 이미지를 위해 복원
-      } catch (e2) { v = null; try { await worker.setParameters(MRZ_PARAMS); } catch (e3) {} }
+      } catch (e) { m = null; src = src || files[i]; }
+      if (okPax(m)) {
+        var out = mrzToPassenger(m, today);
+        // 이름이 채움문자 오독으로 오염되면(예: INSUNKLLLL…) 여권 윗부분의 깨끗한 인쇄 이름으로 교정.
+        // 생년월일·만료일은 검산 통과한 MRZ 값을 유지, 검산 실패분만 비주얼로 보완.
+        if (m.nameSuspect) {
+          var vc = await visualPass(src);
+          if (vc && (vc.surname || vc.given)) {
+            if (vc.surname) out["영문성"] = vc.surname;
+            if (vc.given) out["영문이름"] = vc.given;
+            if (!m.birthOk && vc.birth8) out["생년월일"] = vc.birth8;
+            if (!m.expiryOk && vc.expiryIso) out["여권만료일"] = vc.expiryIso;
+            if (!out["성별"] && vc.sex) out["성별"] = vc.sex;
+            out["경고"] = out["경고"] || "이름이 흐릿해 여권 윗부분에서 보정했어요 — 확인하세요";
+          }
+        }
+        passengers.push(out);
+        continue;
+      }
+      // MRZ가 안 보이거나 못 읽으면 → 여권 윗부분(인쇄 영역)으로 폴백
+      var v = await visualPass(src);
       if (okPax(v)) passengers.push(mrzToPassenger(v, today));
       else nonPassports.push(files[i]);
     }

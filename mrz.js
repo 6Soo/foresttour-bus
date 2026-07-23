@@ -70,9 +70,16 @@
     for (var j = 0; j + 1 < cand.length; j++) {
       if (isLine1(cand[j]) && isLine2(cand[j + 1])) return [cand[j], cand[j + 1]];
     }
-    // 폴백: 이름 구분자('<<') 든 줄 다음에 숫자 많은 줄
+    // 폴백1: 이름 구분자('<<') 든 줄 다음에 숫자 많은 줄
     for (var k = 1; k < cand.length; k++) {
       if (isLine2(cand[k]) && cand[k - 1].indexOf("<<") !== -1) return [cand[k - 1], cand[k]];
+    }
+    // 폴백2: '<<'가 글자로 완전 오독돼도 — 숫자 많은 줄(line2) 앞의 '대체로 알파벳' 줄을 line1로
+    for (var j2 = 1; j2 < cand.length; j2++) {
+      var prev = cand[j2 - 1];
+      if (isLine2(cand[j2]) && prev.length >= 20 && (prev.match(/[A-Z]/g) || []).length >= prev.length * 0.6) {
+        return [prev, cand[j2]];
+      }
     }
     return null;
   }
@@ -111,14 +118,17 @@
     return best;
   }
 
-  // 이름 조각 정리: '<' → 공백, 다중공백 축소, 그리고 끝에 붙은 채움문자 오독 제거.
-  // MRZ 뒷부분은 '<'로 채워지는데 OCR이 이를 같은 글자(LLL·DDD 등)로 읽어 이름 끝에 붙는다.
-  // 같은 글자 3연속 이상으로 끝나면(실제 이름엔 거의 없음) 그 덩어리를 제거: MEJALLL→MEJA.
+  // 이름 조각 정리: '<' → 공백, 다중공백 축소, 그리고 채움문자 오독 제거.
+  // MRZ 뒷부분은 '<'로 채워지는데 OCR이 이를 같은 글자(LLL·KKK 등)로 읽어 이름에 붙는다.
+  // 같은 글자가 3연속 이상 나오면 그 지점부터 끝까지를 채움문자로 보고 잘라낸다: MEJALLL→MEJA,
+  // INSUNKLLLL...RL→INSUNK. (실제 로마자 이름엔 같은 글자 3연속이 거의 없음)
   function cleanNamePart(s) {
     var t = (s || "").replace(/</g, " ").replace(/\s+/g, " ").trim();
-    t = t.replace(/([A-Z])\1{2,}$/, "").trim();
+    t = t.replace(/([A-Z])\1{2,}.*$/, "").trim();
     return t;
   }
+  // 이름이 채움문자 오독으로 오염됐는지(원본 이름 필드에 같은 글자 4연속 이상) — 비주얼 교정 트리거
+  function nameCorrupt(raw) { return /([A-Z])\1{3,}/.test(String(raw || "")); }
 
   function parseName(line1) {
     // 이름 필드 시작점: 발급국(우리 사용자는 항상 KOR) 다음. 못 찾으면 위치 5(P+종류+국가) 폴백.
@@ -126,7 +136,7 @@
     var kor = line1.indexOf("KOR");
     var nameField = kor >= 0 && kor <= 5 ? line1.slice(kor + 3) : line1.slice(5);
     var parts = nameField.split("<<");
-    return { surname: cleanNamePart(parts[0]), given: cleanNamePart(parts[1]) };
+    return { surname: cleanNamePart(parts[0]), given: cleanNamePart(parts[1]), suspect: nameCorrupt(nameField) };
   }
 
   // 메인: 원문 텍스트 → 여권 정보 객체 (못 찾으면 null)
@@ -171,7 +181,7 @@
     var valid = !!(birthOk && expiryOk);
 
     return {
-      surname: nm.surname, given: nm.given,
+      surname: nm.surname, given: nm.given, nameSuspect: !!nm.suspect,
       passportNo: passportNo, nationality: nationality || country || "KOR",
       birth8: birth ? birth.y8 : "", birthIso: birth ? birth.iso : "",
       sex: sex, expiryIso: expiry ? expiry.iso : "",
