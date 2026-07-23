@@ -242,6 +242,7 @@
     var b = p["생년월일"] || "";
     if (s && g) keys.push("nm:" + s + "|" + g);
     if (b && s) keys.push("bd:" + b + "|" + s);
+    if (b && g) keys.push("gb:" + g + "|" + b); // 이름(given)+생년월일 — 성이 오독돼도 동일인 병합
     return keys;
   }
   function paxFullness(p) {
@@ -324,6 +325,9 @@
     var MRZ_PARAMS = { tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<", tessedit_pageseg_mode: "6" };
     var VIS_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "3" };
     function okPax(x) { return x && (x.surname || x.given) && x.birth8; }
+    // 비주얼 교정값이 '이름다운지' — 성은 단일 토큰, 이름은 1~3토큰(각 2~15자 영문). ('OY ST AL' 같은 잡음 거부)
+    function nameLikeOne(s) { return /^[A-Z]{2,15}$/.test(String(s || "").trim()); }
+    function nameLikeMany(s) { return /^[A-Z]{2,15}( [A-Z]{2,15}){0,2}$/.test(String(s || "").trim()); }
 
     // 여권 윗부분(인쇄 영역) 1회 OCR — 화이트리스트 해제 후 인식, 파라미터는 MRZ용으로 복원
     async function visualPass(src) {
@@ -347,17 +351,18 @@
       } catch (e) { m = null; src = src || files[i]; }
       if (okPax(m)) {
         var out = mrzToPassenger(m, today);
-        // 이름이 채움문자 오독으로 오염되면(예: INSUNKLLLL…) 여권 윗부분의 깨끗한 인쇄 이름으로 교정.
-        // 생년월일·만료일은 검산 통과한 MRZ 값을 유지, 검산 실패분만 비주얼로 보완.
-        if (m.nameSuspect) {
+        // 이름이 채움문자 오독으로 오염된 '그 칸만' 여권 윗부분의 깨끗한 인쇄 이름으로 교정.
+        // (성은 멀쩡한데 이름만 깨진 경우 성까지 덮어써 'OY ST AL'처럼 되던 버그 방지)
+        // 생년월일·만료일은 검산 통과한 MRZ 값 유지, 검산 실패분만 비주얼 보완.
+        if (m.surnameSuspect || m.givenSuspect || !m.birthOk) {
           var vc = await visualPass(src);
-          if (vc && (vc.surname || vc.given)) {
-            if (vc.surname) out["영문성"] = vc.surname;
-            if (vc.given) out["영문이름"] = vc.given;
+          if (vc) {
+            if (m.surnameSuspect && nameLikeOne(vc.surname)) out["영문성"] = vc.surname;
+            if (m.givenSuspect && nameLikeMany(vc.given)) out["영문이름"] = vc.given;
             if (!m.birthOk && vc.birth8) out["생년월일"] = vc.birth8;
             if (!m.expiryOk && vc.expiryIso) out["여권만료일"] = vc.expiryIso;
             if (!out["성별"] && vc.sex) out["성별"] = vc.sex;
-            out["경고"] = out["경고"] || "이름이 흐릿해 여권 윗부분에서 보정했어요 — 확인하세요";
+            if (m.surnameSuspect || m.givenSuspect) out["경고"] = out["경고"] || "이름이 흐릿해 여권 윗부분에서 보정했어요 — 확인하세요";
           }
         }
         passengers.push(out);
