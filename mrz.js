@@ -216,14 +216,18 @@
       for (var i = 0; i < lines.length; i++) {
         var m = lines[i].match(labelRe);
         if (!m) continue;
-        var rest = lines[i].slice(m.index + m[0].length).replace(/^[^0-9A-Za-z가-힣]+/, "").trim();
-        if (rest) return rest;
+        // 라벨 뒤 나머지 — 앞쪽 구분자/한글 병기라벨을 지운다(라틴/숫자만 값으로).
+        // 한국 여권은 라벨이 한/영 병기라, 나머지에 라틴·숫자가 없으면 진짜 값은 다음 줄에 있다.
+        var rest = lines[i].slice(m.index + m[0].length).replace(/^[^0-9A-Za-z]+/, "").trim();
+        if (/[0-9A-Za-z]/.test(rest)) return rest;
         if (i + 1 < lines.length) return lines[i + 1].trim();
       }
       return "";
     }
-    var surname = cleanNamePart(valAfter(/SURNAME/i).toUpperCase());
-    var given = cleanNamePart(valAfter(/GIVEN\s*NAMES?/i).toUpperCase());
+    // 이름은 라틴 대문자+공백만 남긴다(한글 라벨·잡음 제거) → cleanNamePart로 채움문자 정리.
+    function latinName(s) { return cleanNamePart(String(s || "").toUpperCase().replace(/[^A-Z< ]/g, " ")); }
+    var surname = latinName(valAfter(/SURNAME/i));
+    var given = latinName(valAfter(/GIVEN\s*NAMES?/i));
     var sexRaw = valAfter(/\bSEX\b/i).toUpperCase();
     var sm = sexRaw.match(/[MF]/);
     var sex = sm ? sm[0] : "";
