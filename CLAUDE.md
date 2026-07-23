@@ -12,6 +12,7 @@
 | `itinerary.html` + `itinerary.js` + `itinerary.css` | **바이브 일정**: 어떤 양식이든 붙여넣으면 일정표로 (붙여넣기가 유일한 시작점, 수동 입력 폐지). **별도 편집 모드 없음** — 결과 페이지가 곧 터치 편집 화면 (오브젝트 터치 시 바로 편집, 밑줄·이동/삭제 버튼은 포커스 중에만 표시, 캡처·복사 시 편집 UI 제외 + 빈 항목 정리) |
 | `import.html` + `import.js` + `import.css` | **이미지로 일정**: 이미지(OCR) → 일정 자동 변환 도구 |
 | `parse-rules.js` | **두 일정 페이지가 공유**하는 카테고리 정의(`CATS`)와 파싱 규칙(`PARSE_RULES`) |
+| `flight.html` + `flight.js` + `flight.css` + `flightprep.js` + `mrz.js` | **바이브 항공권 예약**: 여권 사진 + 날짜·노선 메시지/캡처 → 탑승자 정보(수정 가능한 복사칩) + 예약 딥링크. 여권 판독은 **기본 폰 내 tesseract(MRZ+인쇄영역), 정밀 판독 서버(Gemini) 설정 시 그쪽 우선**. 서버 = 별도 저장소 **6soo/flight_prep**. ⚠️ 상세 아키텍처·미처리 항목·테스트법은 **`docs/flight-tool-handoff.md` 필독**. `mrz.js`는 순수 함수(node 테스트 가능). |
 
 - 일정 데이터는 URL 해시(`#d=base64`)로만 전달됩니다. **localStorage 복원 폐지** (사용자 요청:
   이전 일정이 다시 떠서 헷갈림) — 새로고침하면 항상 빈 랜딩부터 시작.
@@ -141,7 +142,7 @@ import 미리보기에서 사용자가 분류를 고치면 `localStorage('forest
 
 ## 배포 체크리스트
 
-1. **JS/CSS를 수정하면 반드시 세 HTML의 자산 버전 쿼리(`?v=YYYYMMDD*`)를 함께 올릴 것.**
+1. **JS/CSS를 수정하면 반드시 다섯 HTML(index/bus/itinerary/import/flight)의 자산 버전 쿼리(`?v=YYYYMMDD*`)를 함께 올릴 것.** (현재 `v=20260707s`)
    GitHub Pages(+모바일 브라우저) 캐시 때문에 버전을 안 올리면 사용자에게 옛 코드가 실행된다
    (실제로 수정 배포 후에도 사용자 휴대폰에서 옛 버그가 재현된 사고 있음).
 2. 파서 수정 시 node 단위 테스트(위 명령) + **실제 이미지 파일로 E2E 테스트**를 할 것:
