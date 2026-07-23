@@ -312,38 +312,40 @@
     var leftover = [];         // 여권으로 못 읽은 이미지(항공 화면 등)
     var mrzFailed = false;
 
+    var serverTrips = null;
     if (images.length) {
       var blobs = images.map(function (im) { return im.blob; });
       $("go").disabled = true;
-      try {
-        // 1) 폰 안에서 여권 MRZ 직접 인식 — 서버·비밀번호 불필요, 이미지 전송 없음
-        var local = await FlightPrep.readPassports(blobs, {
-          onProgress: function (msg, ratio) { $("hint").textContent = msg; },
-        });
-        passengers = local.passengers;
-        leftover = local.nonPassports;
-      } catch (e) {
-        mrzFailed = true; leftover = blobs; // 판독기 로드 실패 등 → 전부 서버 후보로
+      var pw = lsGet(LS_PW);
+      if (pw) {
+        // 서버(Gemini)가 설정돼 있으면 정밀 판독 우선 — 폰 안 OCR(tesseract)보다 훨씬 정확
+        $("hint").textContent = "여권 읽는 중… (정밀 판독)";
+        try {
+          var data = await FlightPrep.analyzePaste(blobs, {
+            baseUrl: serverBase(), username: "admin", password: pw, text: text,
+          });
+          passengers = [];
+          (data.trips || []).forEach(function (t) { (t.passengers || []).forEach(function (p) { passengers.push(p); }); });
+          (data.unassigned_passengers || []).forEach(function (p) { passengers.push(p); });
+          serverTrips = data.trips || [];
+        } catch (e) { pw = null; /* 서버 실패 → tesseract 폴백 */ }
+      }
+      if (!pw) {
+        // 서버 미설정/실패 → 폰 안 tesseract 판독 (오프라인, 이미지 전송 없음)
+        try {
+          var local = await FlightPrep.readPassports(blobs, {
+            onProgress: function (msg) { $("hint").textContent = msg; },
+          });
+          passengers = local.passengers;
+          leftover = local.nonPassports;
+        } catch (e) { mrzFailed = true; leftover = blobs; }
       }
       $("hint").textContent = ""; $("go").disabled = false;
     }
 
-    // 2) 링크: 붙여넣은 날짜·노선 텍스트로 생성 (서버 불필요)
+    // 링크: 붙여넣은 날짜·노선 텍스트로 생성(클라이언트, 안정적). 없으면 서버가 화면에서 뽑은 여정으로 보완.
     if (text) trips = tripsFromText(text);
-
-    // 3) 텍스트로 링크를 못 만들었고, 여권 아닌 이미지가 남았고, 서버가 설정돼 있을 때만
-    //    항공 화면 전사를 위해 서버 호출(선택). 비밀번호가 저장돼 있을 때만 조용히 시도.
-    if (!trips.length && leftover.length && lsGet(LS_PW)) {
-      $("go").disabled = true; $("hint").textContent = "항공 화면 읽는 중…";
-      try {
-        var data = await FlightPrep.analyzePaste(leftover, {
-          baseUrl: serverBase(), username: "admin", password: lsGet(LS_PW), text: text,
-        });
-        trips = data.trips || [];
-        passengers = passengers.concat(data.unassigned_passengers || []);
-      } catch (e) { /* 서버 실패해도 MRZ 결과로 진행 */ }
-      $("hint").textContent = ""; $("go").disabled = false;
-    }
+    if (!trips.length && serverTrips && serverTrips.length) trips = serverTrips;
 
     fillMissingLinks(trips, text);
 

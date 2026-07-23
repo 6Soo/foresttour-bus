@@ -136,7 +136,11 @@
     var kor = line1.indexOf("KOR");
     var nameField = kor >= 0 && kor <= 5 ? line1.slice(kor + 3) : line1.slice(5);
     var parts = nameField.split("<<");
-    return { surname: cleanNamePart(parts[0]), given: cleanNamePart(parts[1]), suspect: nameCorrupt(nameField) };
+    return {
+      surname: cleanNamePart(parts[0]), given: cleanNamePart(parts[1]),
+      surnameSuspect: nameCorrupt(parts[0]), givenSuspect: nameCorrupt(parts[1] || ""),
+      suspect: nameCorrupt(nameField),
+    };
   }
 
   // 메인: 원문 텍스트 → 여권 정보 객체 (못 찾으면 null)
@@ -182,6 +186,7 @@
 
     return {
       surname: nm.surname, given: nm.given, nameSuspect: !!nm.suspect,
+      surnameSuspect: !!nm.surnameSuspect, givenSuspect: !!nm.givenSuspect,
       passportNo: passportNo, nationality: nationality || country || "KOR",
       birth8: birth ? birth.y8 : "", birthIso: birth ? birth.iso : "",
       sex: sex, expiryIso: expiry ? expiry.iso : "",
