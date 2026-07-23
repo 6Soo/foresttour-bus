@@ -91,6 +91,17 @@
         start = idx + name.length;
       }
     }
+    // 맨 코드(괄호 없이): 항공 화면 캡처의 'ICN'·'FUK' 등 — 사전에 있는 코드만, 앞뒤가 영문자가 아닐 때
+    const up = text.toUpperCase();
+    let cm; const CR = /[A-Z]{3}/g;
+    while ((cm = CR.exec(up))) {
+      const code = cm[0];
+      if (!CODE_TO_CITY[code]) continue;
+      const bi = cm.index;
+      const bef = bi > 0 ? up[bi - 1] : "", aft = bi + 3 < up.length ? up[bi + 3] : "";
+      if (/[A-Z]/.test(bef) || /[A-Z]/.test(aft)) continue; // 단어 일부는 제외
+      found.push({ idx: bi, len: 3, code: code });
+    }
     found.sort((a, b) => a.idx - b.idx || b.len - a.len);
     const out = []; let consumedEnd = -1;
     for (const f of found) {
@@ -371,10 +382,32 @@
       // MRZ가 안 보이거나 못 읽으면 → 여권 윗부분(인쇄 영역)으로 폴백
       var v = await visualPass(src);
       if (okPax(v)) passengers.push(mrzToPassenger(v, today));
-      else nonPassports.push(files[i]);
+      else nonPassports.push({ file: files[i], src: src });
     }
     await worker.terminate();
-    return { passengers: dedupPassengers(passengers), nonPassports: nonPassports };
+
+    // 여권이 아닌 이미지(항공 화면·'9.23~27 후쿠오카' 같은 메시지 캡처)는 한글+영문으로 OCR해
+    // 날짜·노선 텍스트를 뽑는다 → 손입력 없이 붙여넣기만으로 링크 생성.
+    var noteText = "";
+    if (nonPassports.length) {
+      onProgress("항공 정보(날짜·노선) 읽는 중…", 0.92);
+      try {
+        var tw = await global.Tesseract.createWorker(["kor", "eng"], 1, {});
+        for (var j = 0; j < nonPassports.length; j++) {
+          try {
+            var rr = await tw.recognize(nonPassports[j].src || nonPassports[j].file);
+            noteText += ((rr && rr.data && rr.data.text) || "") + "\n";
+          } catch (e) {}
+        }
+        await tw.terminate();
+      } catch (e) { /* kor 모델 로드 실패 등 — 무시 */ }
+    }
+
+    return {
+      passengers: dedupPassengers(passengers),
+      nonPassports: nonPassports.map(function (n) { return n.file; }),
+      noteText: noteText,
+    };
   }
 
   global.FlightPrep = {
