@@ -310,6 +310,7 @@
     var trips = [];
     var passengers = [];       // 여권 정보 (MRZ 로컬 인식 우선)
     var leftover = [];         // 여권으로 못 읽은 이미지(항공 화면 등)
+    var imageNote = "";        // 여권 아닌 이미지에서 OCR한 날짜·노선 텍스트
     var mrzFailed = false;
 
     var serverTrips = null;
@@ -338,14 +339,18 @@
           });
           passengers = local.passengers;
           leftover = local.nonPassports;
+          imageNote = local.noteText || ""; // 여권 아닌 이미지에서 OCR한 날짜·노선 텍스트
         } catch (e) { mrzFailed = true; leftover = blobs; }
       }
       $("hint").textContent = ""; $("go").disabled = false;
     }
 
-    // 링크: 붙여넣은 날짜·노선 텍스트로 생성(클라이언트, 안정적). 없으면 서버가 화면에서 뽑은 여정으로 보완.
+    // 링크: 붙여넣은 날짜·노선 텍스트 우선. 없으면 이미지에서 OCR한 텍스트, 그다음 서버 여정.
     if (text) trips = tripsFromText(text);
+    if (!trips.length && imageNote.trim()) trips = tripsFromText(imageNote);
     if (!trips.length && serverTrips && serverTrips.length) trips = serverTrips;
+    // 링크 인원 보정용: 텍스트가 없으면 이미지 OCR 텍스트를 인원수 소스로도 씀
+    if (!text && imageNote.trim()) text = imageNote;
 
     fillMissingLinks(trips, text);
 
