@@ -82,7 +82,9 @@
       while (true) {
         const idx = text.indexOf(name, start);
         if (idx === -1) break;
-        if (name.length === 1) {
+        // 1글자 별칭 중 '인'(인천 약칭)만 한글 인접 시 스킵(확인·인사 등 오탐 방지).
+        // '괌'처럼 1음절이 정식 도시명 전체인 경우는 조사(괌으로/괌에서)가 붙어도 인식해야 함.
+        if (name.length === 1 && name === "인") {
           const before = idx > 0 ? text[idx - 1] : "";
           const after = idx + 1 < text.length ? text[idx + 1] : "";
           if (isHangul(before) || isHangul(after)) { start = idx + 1; continue; }
@@ -127,12 +129,17 @@
   const KOREA_AIRPORTS = { ICN: 1, GMP: 1, CJU: 1, PUS: 1 };
 
   function parseOneTrip(text, today) {
-    let codes = parseAirports(text);
-    if (codes.length === 1 && !KOREA_AIRPORTS[codes[0]]) codes = ["ICN", codes[0]];
+    const codes = parseAirports(text);
     const dr = parseDates(text, today);
     const depart = dr[0], ret = dr[1];
     const roundTrip = codes.length >= 4 || ret != null;
-    const originCode = codes[0] || "", destCode = codes[1] || "";
+    // 우리 여행은 늘 한국 출발 → 국외 공항이 있으면 그게 도착지, 출발지는 한국 공항(없으면 인천).
+    // 등장 순서에만 의존하면 "후쿠오카 인천공항 집결"처럼 목적지 뒤 집결지 언급에 방향이 뒤집힘.
+    const foreign = codes.filter(function (c) { return !KOREA_AIRPORTS[c]; });
+    const korean = codes.filter(function (c) { return KOREA_AIRPORTS[c]; });
+    let originCode, destCode;
+    if (foreign.length) { destCode = foreign[0]; originCode = korean[0] || "ICN"; }
+    else { originCode = codes[0] || ""; destCode = codes[1] || ""; }
     return {
       originCode: originCode, destCode: destCode,
       depart: depart, return: roundTrip ? ret : null, roundTrip: roundTrip,
@@ -251,9 +258,10 @@
     var s = String(p["영문성"] || "").toUpperCase().trim();
     var g = String(p["영문이름"] || "").toUpperCase().replace(/\s+/g, "").trim();
     var b = p["생년월일"] || "";
+    var x = String(p["성별"] || "").toUpperCase().charAt(0);
     if (s && g) keys.push("nm:" + s + "|" + g);
     if (b && s) keys.push("bd:" + b + "|" + s);
-    if (b && g) keys.push("gb:" + g + "|" + b); // 이름(given)+생년월일 — 성이 오독돼도 동일인 병합
+    if (b && g && x) keys.push("gb:" + g + "|" + b + "|" + x); // 이름+생년+성별 — 성이 오독돼도 병합(오병합 위험은 성별로 축소)
     return keys;
   }
   function paxFullness(p) {
