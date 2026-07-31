@@ -368,7 +368,7 @@
       var why = mrzFailed
         ? "여권 판독기를 불러오지 못했어요. 잠시 후 다시 시도하거나, 날짜·노선을 붙여넣어 주세요."
         : (images.length
-          ? "여권을 읽지 못했어요. MRZ(여권 맨 아래 <<< 두 줄)가 선명하게 보이게 다시 찍어주세요."
+          ? "여권 글자를 읽지 못했어요. MRZ가 없어도 괜찮아요. 이름·여권번호·생년월일이 보이도록 여권면을 크게 붙여넣어 주세요."
           : "여권 사진이나 날짜·노선 메시지를 붙여넣어 주세요.");
       render({ trips: [], unassigned_passengers: [] });
       $("flight-out").innerHTML = '<div class="trip-card"><div class="link-miss">' + esc(why) + "</div></div>";

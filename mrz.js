@@ -198,54 +198,120 @@
   // 여권 데이터면의 영문 라벨(Surname/Given names/Date of birth/Sex/Date of expiry/Passport No.)을
   // 기준으로 값을 읽는다. 한국 여권은 라벨이 한/영 병기라 영문 라벨로 앵커링.
   var MONTHS = { JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6, JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12 };
+  var MONTH_OCR = {
+    IAN: "JAN", IUN: "JUN", IUL: "JUL",
+    "0CT": "OCT", OIC: "DEC", "01C": "DEC", DIC: "DEC", OEC: "DEC", "0EC": "DEC",
+  };
   function parseVisualDate(s) {
     // "10 1월/JAN 1961" 같은 표기 — 한국월(N월) 제거 후 일/영문월/연도를 각각 추출
     var u = String(s || "").toUpperCase().replace(/[0-9]+\s*월/g, " ");
-    var mon = u.match(/JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/);
+    var mon = u.match(/JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC|IAN|IUN|IUL|0CT|OIC|01C|DIC|OEC|0EC/);
     var year = u.match(/(?:19|20)\d{2}/);
-    var day = u.match(/(^|[^0-9])(\d{1,2})(?![0-9])/);
+    var day = mon
+      ? u.slice(Math.max(0, mon.index - 8), mon.index).match(/(^|[^0-9])(\d{1,2})[^0-9]*$/)
+      : null;
+    if (!day) day = u.match(/(^|[^0-9])(\d{1,2})(?![0-9])/);
     if (!mon || !year || !day) return null;
-    var mm = MONTHS[mon[0]], dd = +day[2];
+    var monthKey = MONTH_OCR[mon[0]] || mon[0];
+    var mm = MONTHS[monthKey], dd = +day[2];
     if (dd < 1 || dd > 31) return null;
     return { iso: year[0] + "-" + pad(mm) + "-" + pad(dd), y8: year[0] + pad(mm) + pad(dd) };
   }
 
+  // MRZ 둘째 줄이 잘려도 첫째 줄에는 영문 성명이 남는다. '<'가 C/K/L로 보이는
+  // 저해상도 OCR도 이름 구분자로 인정하되, 여권 신호(P...KOR)가 있는 줄에만 적용한다.
+  function parseLooseMrzName(text) {
+    var raw = String(text || "").split(/\r?\n/);
+    for (var i = 0; i < raw.length; i++) {
+      var line = raw[i].toUpperCase().replace(/\s+/g, "").replace(/[^A-Z0-9<]/g, "");
+      var head = line.match(/P[<P]?(?:KOR|ROR)/);
+      if (!head) continue;
+      var tail = line.slice(head.index + head[0].length);
+      var sep = tail.match(/<<|CC|KK|LL/);
+      if (!sep || sep.index < 1) continue;
+      var surname = cleanNamePart(tail.slice(0, sep.index).replace(/[^A-Z<]/g, ""));
+      var given = cleanNamePart(tail.slice(sep.index + sep[0].length).replace(/[^A-Z<]/g, ""));
+      if (surname || given) return { surname: surname, given: given };
+    }
+    return null;
+  }
+
   function parseVisualPassport(text) {
     var lines = String(text || "").split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
-    function valAfter(labelRe) {
+    var upperText = String(text || "").toUpperCase();
+    var passportSignal = /PASSPORT|P[<P]?(?:KOR|ROR)/i.test(upperText);
+    if (!passportSignal) return null;
+
+    function valAfter(labelRe, accept) {
       for (var i = 0; i < lines.length; i++) {
         var m = lines[i].match(labelRe);
         if (!m) continue;
         // 라벨 뒤 나머지 — 앞쪽 구분자/한글 병기라벨을 지운다(라틴/숫자만 값으로).
-        // 한국 여권은 라벨이 한/영 병기라, 나머지에 라틴·숫자가 없으면 진짜 값은 다음 줄에 있다.
+        // 작은 사진에서는 라벨과 값 사이에 잡음/줄바꿈이 끼므로 최대 4줄까지 찾는다.
         var rest = lines[i].slice(m.index + m[0].length).replace(/^[^0-9A-Za-z]+/, "").trim();
-        if (/[0-9A-Za-z]/.test(rest)) return rest;
-        if (i + 1 < lines.length) return lines[i + 1].trim();
+        if (/[0-9A-Za-z]/.test(rest) && (!accept || accept(rest))) return rest;
+        for (var j = i + 1; j < lines.length && j <= i + 4; j++) {
+          var candidate = lines[j].trim();
+          if (!accept || accept(candidate)) return candidate;
+        }
       }
       return "";
     }
     // 이름은 라틴 대문자+공백만 남긴다(한글 라벨·잡음 제거) → cleanNamePart로 채움문자 정리.
     function latinName(s) { return cleanNamePart(String(s || "").toUpperCase().replace(/[^A-Z< ]/g, " ")); }
-    var surname = latinName(valAfter(/SURNAME/i));
-    var given = latinName(valAfter(/GIVEN\s*NAMES?/i));
-    var sexRaw = valAfter(/\bSEX\b/i).toUpperCase();
+    function nameValue(s) {
+      var n = latinName(s);
+      return /^[A-Z]{2,15}( [A-Z]{2,15}){0,2}$/.test(n) &&
+        !/^(SURNAME|GIVEN|NAMES?|PASSPORT|REPUBLIC|KOREA|NATIONALITY)$/.test(n);
+    }
+    var surname = latinName(valAfter(/SURNAME/i, nameValue));
+    var given = latinName(valAfter(/GIVEN\s*NAMES?/i, nameValue));
+    var looseName = parseLooseMrzName(text);
+    if (!surname && looseName) surname = looseName.surname;
+    if (!given && looseName) given = looseName.given;
+
+    var sexRaw = valAfter(/\bSEX\b/i, function (s) { return /(^|[^A-Z0-9])[MF]([^A-Z0-9]|$)/i.test(s); }).toUpperCase();
     var sm = sexRaw.match(/[MF]/);
-    var sex = sm ? sm[0] : "";
-    var birth = parseVisualDate(valAfter(/DATE\s*OF\s*BIRTH/i));
-    var expiry = parseVisualDate(valAfter(/DATE\s*OF\s*EXPIRY/i));
+    if (!sm) sm = upperText.match(/(^|[^A-Z0-9])[MF]([^A-Z0-9]|$)/m);
+    var sex = sm ? (sm[0].match(/[MF]/) || [""])[0] : "";
+
+    var birth = parseVisualDate(valAfter(/DATE\s*OF\s*BIRTH/i, function (s) { return !!parseVisualDate(s); }));
+    var expiry = parseVisualDate(valAfter(/DATE\s*OF\s*EXPIRY/i, function (s) { return !!parseVisualDate(s); }));
+    // 라벨이 작아 사라져도 여권면의 영문월 날짜들을 모아 가장 오래된 날짜=생년,
+    // 가장 먼 미래 날짜=만료일로 보완한다(발급일은 둘 사이이므로 자연히 제외).
+    var dates = lines.map(parseVisualDate).filter(Boolean).sort(function (a, b) { return a.iso.localeCompare(b.iso); });
+    var currentYear = new Date().getFullYear();
+    if (!birth) {
+      for (var d = 0; d < dates.length; d++) {
+        if (+dates[d].iso.slice(0, 4) <= currentYear) { birth = dates[d]; break; }
+      }
+    }
+    if (!expiry && dates.length) {
+      var last = dates[dates.length - 1];
+      if (+last.iso.slice(0, 4) >= 2000) expiry = last;
+    }
+
     // 여권번호는 '영문1 + 숫자1 + 영숫자6~7' 패턴만 인정(오추출 방지 — 틀린 번호는 잘못된 중복병합 유발)
-    var pmatch = valAfter(/PASSPORT\s*NO/i).toUpperCase().match(/[A-Z][0-9][A-Z0-9]{6,7}/);
+    var passText = valAfter(/PASSPORT(?:\s*(?:NO|NUMBER))?/i, function (s) {
+      return /[A-Z][0-9][A-Z0-9]{7}/i.test(s);
+    }) || upperText;
+    var pmatch = passText.toUpperCase().match(/[A-Z][0-9][A-Z0-9]{7}/);
     var passportNo = pmatch ? pmatch[0] : "";
-    // 최소 조건: 이름(성 또는 이름) + 생년월일이 있어야 탑승자로 인정
-    if (!(surname || given) || !birth) return null;
+    // 일부만 읽혀도 수정 가능한 카드로 넘긴다. 단 여권번호/이름 중 하나와
+    // 날짜 또는 여권번호가 함께 있어야 항공 화면을 여권으로 오인하지 않는다.
+    if (!(surname || given || passportNo) || !(birth || expiry || passportNo)) return null;
     return {
       surname: surname, given: given, passportNo: passportNo, nationality: "KOR",
-      birth8: birth.y8, birthIso: birth.iso, sex: sex, expiryIso: expiry ? expiry.iso : "",
+      birth8: birth ? birth.y8 : "", birthIso: birth ? birth.iso : "",
+      sex: sex, expiryIso: expiry ? expiry.iso : "",
       valid: false, source: "visual",
     };
   }
 
-  var api = { parseMrz: parseMrz, parseVisualPassport: parseVisualPassport, checkDigit: checkDigit, findLines: findLines };
+  var api = {
+    parseMrz: parseMrz, parseVisualPassport: parseVisualPassport,
+    parseLooseMrzName: parseLooseMrzName, checkDigit: checkDigit, findLines: findLines,
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.MRZ = api;
 })(typeof self !== "undefined" ? self : this);
