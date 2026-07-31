@@ -321,6 +321,31 @@
     });
   }
 
+  // 카카오톡 화면 캡처 안에 여권 사진이 작게 들어간 경우, 전체 화면 OCR은 채팅 글자만 읽고
+  // 여권을 건너뛴다. 네 모서리의 겹치는 68% 영역을 크게 확대해 여권 사진 위치를 다시 찾는다.
+  function visualTiles(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var ratio = 0.68, cw = Math.round(img.width * ratio), ch = Math.round(img.height * ratio);
+          var points = [[0, 0], [img.width - cw, 0], [0, img.height - ch], [img.width - cw, img.height - ch]];
+          var out = points.map(function (p) {
+            var scale = Math.max(1, Math.min(5, 1500 / cw));
+            var cv = document.createElement("canvas");
+            cv.width = Math.round(cw * scale); cv.height = Math.round(ch * scale);
+            cv.getContext("2d").drawImage(img, p[0], p[1], cw, ch, 0, 0, cv.width, cv.height);
+            return cv;
+          });
+          URL.revokeObjectURL(img.src);
+          resolve(out);
+        } catch (e) { URL.revokeObjectURL(img.src); resolve([]); }
+      };
+      img.onerror = function () { resolve([]); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   // files → { passengers:[dict], nonPassports:[File] }. MRZ 못 읽은 이미지는 nonPassports로.
   async function readPassports(files, opts) {
     opts = opts || {};
@@ -342,21 +367,58 @@
       tessedit_pageseg_mode: "6",
     });
     var MRZ_PARAMS = { tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<", tessedit_pageseg_mode: "6" };
-    var VIS_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "3" };
-    function okPax(x) { return x && (x.surname || x.given) && x.birth8; }
+    var VIS_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "6" };
+    var VIS_SPARSE_PARAMS = { tessedit_char_whitelist: "", tessedit_pageseg_mode: "11" };
+    function okPax(x) {
+      if (!x) return false;
+      var name = x.surname || x.given;
+      return !!((name && (x.birth8 || x.passportNo)) ||
+        (x.passportNo && (x.birth8 || x.expiryIso)));
+    }
     // 비주얼 교정값이 '이름다운지' — 성은 단일 토큰, 이름은 1~3토큰(각 2~15자 영문). ('OY ST AL' 같은 잡음 거부)
     function nameLikeOne(s) { return /^[A-Z]{2,15}$/.test(String(s || "").trim()); }
     function nameLikeMany(s) { return /^[A-Z]{2,15}( [A-Z]{2,15}){0,2}$/.test(String(s || "").trim()); }
 
-    // 여권 윗부분(인쇄 영역) 1회 OCR — 화이트리스트 해제 후 인식, 파라미터는 MRZ용으로 복원
-    async function visualPass(src) {
+    function visualScore(v) {
+      if (!v) return 0;
+      return ["surname", "given", "passportNo", "birth8", "sex", "expiryIso"]
+        .reduce(function (n, key) { return n + (v[key] ? 1 : 0); }, 0);
+    }
+    function mergeVisual(a, b) {
+      if (!a) return b;
+      if (!b) return a;
+      ["surname", "given", "passportNo", "birth8", "birthIso", "sex", "expiryIso"].forEach(function (key) {
+        if (!a[key] && b[key]) a[key] = b[key];
+      });
+      return a;
+    }
+
+    // 원본색·대비본·화면 타일을 일반 OCR한다. 여권 신호가 잡힌 최선의 타일은
+    // sparse-text 모드로 한 번 더 읽어 서로 놓친 필드를 병합한다.
+    async function visualPass(candidates) {
+      var best = null, bestSrc = null, bestScore = 0;
       try {
         await worker.setParameters(VIS_PARAMS);
-        var rv = await worker.recognize(src);
-        var v = global.MRZ.parseVisualPassport((rv && rv.data && rv.data.text) || "");
+        for (var vi = 0; vi < candidates.length; vi++) {
+          var rv = await worker.recognize(candidates[vi]);
+          var v = global.MRZ.parseVisualPassport((rv && rv.data && rv.data.text) || "");
+          var score = visualScore(v);
+          if (score > bestScore) { best = v; bestSrc = candidates[vi]; bestScore = score; }
+          if (score >= 6) break;
+        }
+        if (bestSrc && bestScore < 6) {
+          await worker.setParameters(VIS_SPARSE_PARAMS);
+          var sparse = await worker.recognize(bestSrc);
+          best = mergeVisual(best, global.MRZ.parseVisualPassport(
+            (sparse && sparse.data && sparse.data.text) || ""
+          ));
+        }
         await worker.setParameters(MRZ_PARAMS);
-        return v;
-      } catch (e) { try { await worker.setParameters(MRZ_PARAMS); } catch (e2) {} return null; }
+        return best;
+      } catch (e) {
+        try { await worker.setParameters(MRZ_PARAMS); } catch (e2) {}
+        return best;
+      }
     }
 
     var passengers = [], nonPassports = [];
@@ -374,7 +436,7 @@
         // (성은 멀쩡한데 이름만 깨진 경우 성까지 덮어써 'OY ST AL'처럼 되던 버그 방지)
         // 생년월일·만료일은 검산 통과한 MRZ 값 유지, 검산 실패분만 비주얼 보완.
         if (m.surnameSuspect || m.givenSuspect || !m.birthOk) {
-          var vc = await visualPass(src);
+          var vc = await visualPass([files[i], src]);
           if (vc) {
             if (m.surnameSuspect && nameLikeOne(vc.surname)) out["영문성"] = vc.surname;
             if (m.givenSuspect && nameLikeMany(vc.given)) out["영문이름"] = vc.given;
@@ -388,7 +450,8 @@
         continue;
       }
       // MRZ가 안 보이거나 못 읽으면 → 여권 윗부분(인쇄 영역)으로 폴백
-      var v = await visualPass(src);
+      var candidates = [files[i], src].concat(await visualTiles(files[i]));
+      var v = await visualPass(candidates);
       if (okPax(v)) passengers.push(mrzToPassenger(v, today));
       else nonPassports.push({ file: files[i], src: src });
     }
