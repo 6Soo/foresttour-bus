@@ -322,51 +322,49 @@
         elements.board.dataset.activeStatus = state.activeStatus;
         elements.board.hidden = !state.key;
         elements.board.replaceChildren();
-        const groups = new Map();
-        state.todos.forEach(todo => {
-            const key = todo.tourFldid || 'unknown';
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(todo);
-        });
-        groups.forEach((groupTodos, tourFldid) => {
-            const tour = state.tours.find(item => item.fldid === tourFldid);
-            const group = document.createElement('section');
-            group.className = 'trip-group';
-            const groupHeading = document.createElement('div');
-            groupHeading.className = 'trip-group-heading';
-            const groupTitle = document.createElement('strong');
-            groupTitle.textContent = `🧳 ${tour ? tourDisplayTitle(tour) : `여행 ${tourFldid}`}`;
-            groupHeading.append(groupTitle);
-            const groupBoard = document.createElement('div');
-            groupBoard.className = 'trip-group-board';
-            ['todo', 'doing', 'done'].forEach(status => {
-                const column = document.createElement('article');
-                column.className = `board-column column-${status}`;
-                column.dataset.columnStatus = status;
-                const heading = document.createElement('div');
-                heading.className = 'column-heading';
-                const headingLabel = document.createElement('div');
-                headingLabel.innerHTML = `<span class="column-dot"></span><h3>${STATUS_LABELS[status]}</h3>`;
-                const count = document.createElement('span');
-                count.className = 'column-count';
-                count.textContent = groupTodos.filter(todo => todo.status === status).length;
-                heading.append(headingLabel, count);
-                const list = document.createElement('div');
-                list.className = 'column-list';
-                const todos = groupTodos.filter(todo => todo.status === status);
-                if (!todos.length) {
-                    const empty = document.createElement('div');
-                    empty.className = 'empty-column';
-                    empty.textContent = status === 'done' ? '완료한 업무가 여기에 모입니다.' : '아직 등록된 업무가 없습니다.';
-                    list.append(empty);
-                } else {
-                    todos.forEach(todo => list.append(createTodoCard(todo)));
-                }
-                column.append(heading, list);
-                groupBoard.append(column);
-            });
-            group.append(groupHeading, groupBoard);
-            elements.board.append(group);
+        ['todo', 'doing', 'done'].forEach(status => {
+            const column = document.createElement('article');
+            column.className = `board-column column-${status}`;
+            column.dataset.columnStatus = status;
+            const heading = document.createElement('div');
+            heading.className = 'column-heading';
+            const headingLabel = document.createElement('div');
+            headingLabel.innerHTML = `<span class="column-dot"></span><h3>${STATUS_LABELS[status]}</h3>`;
+            const count = document.createElement('span');
+            count.className = 'column-count';
+            const todos = state.todos.filter(todo => todo.status === status);
+            count.textContent = todos.length;
+            heading.append(headingLabel, count);
+            const list = document.createElement('div');
+            list.className = 'column-list';
+            if (!todos.length) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-column';
+                empty.textContent = status === 'done' ? '완료한 업무가 여기에 모입니다.' : '아직 등록된 업무가 없습니다.';
+                list.append(empty);
+            } else {
+                const groups = new Map();
+                todos.forEach(todo => {
+                    const key = todo.tourFldid || 'unknown';
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(todo);
+                });
+                groups.forEach((groupTodos, tourFldid) => {
+                    const tripGroup = document.createElement('section');
+                    tripGroup.className = 'column-trip-group';
+                    const tripHeading = document.createElement('strong');
+                    tripHeading.className = 'column-trip-heading';
+                    const tour = state.tours.find(item => item.fldid === tourFldid);
+                    tripHeading.textContent = `🧳 ${tour ? tourDisplayTitle(tour) : `여행 ${tourFldid}`}`;
+                    const tripList = document.createElement('div');
+                    tripList.className = 'column-trip-list';
+                    groupTodos.forEach(todo => tripList.append(createTodoCard(todo)));
+                    tripGroup.append(tripHeading, tripList);
+                    list.append(tripGroup);
+                });
+            }
+            column.append(heading, list);
+            elements.board.append(column);
         });
         elements.emptyBoard.hidden = Boolean(state.key && state.todos.length);
         $('emptyBoardTitle').textContent = state.key ? '아직 업무가 없습니다' : '운영 키를 입력해 주세요';
