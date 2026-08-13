@@ -157,6 +157,17 @@
         }).format(date);
     }
 
+    function formatTaskDate(value) {
+        if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+        const [, month, day] = value.split('-').map(Number);
+        const date = new Date(`${value}T00:00:00+09:00`);
+        if (Number.isNaN(date.getTime())) return '';
+        const weekday = new Intl.DateTimeFormat('ko-KR', {
+            timeZone: 'Asia/Seoul', weekday: 'short',
+        }).format(date);
+        return `${month}월${day}일(${weekday})`;
+    }
+
     function selectedTour() {
         return state.tours.find(tour => tour.fldid === state.selectedTourFldid) || null;
     }
@@ -230,7 +241,7 @@
     function renderTourMeta() {
         const tour = selectedTour();
         if (!tour) {
-            elements.tourMeta.textContent = '일정을 선택하면 기본 업무가 준비됩니다.';
+            elements.tourMeta.textContent = '여행을 선택하면 업무를 등록할 수 있습니다.';
             return;
         }
         elements.tourMeta.replaceChildren();
@@ -363,17 +374,31 @@
         const statusIcon = document.createElement('span');
         statusIcon.className = 'card-status-icon';
         statusIcon.textContent = STATUS_EMOJIS[todo.status] || '📝';
-        const title = document.createElement('input');
-        title.className = 'todo-title-input';
-        title.type = 'text';
-        title.maxLength = 160;
-        title.value = todo.title;
-        title.setAttribute('aria-label', '업무 제목 수정');
-        title.addEventListener('change', () => {
-            const next = title.value.trim();
-            if (next && next !== todo.title) patchTodo(todo, { title: next });
-            else title.value = todo.title;
-        });
+        const isStructured = Boolean(todo.taskDate || todo.taskTarget || todo.headcount || todo.taskAction);
+        let title;
+        if (isStructured) {
+            title = document.createElement('div');
+            title.className = 'task-action';
+            const actionLabel = document.createElement('span');
+            actionLabel.className = 'task-action-label';
+            actionLabel.textContent = '할 일';
+            const actionValue = document.createElement('strong');
+            actionValue.className = 'task-action-value';
+            actionValue.textContent = todo.taskAction || todo.title;
+            title.append(actionLabel, actionValue);
+        } else {
+            title = document.createElement('input');
+            title.className = 'todo-title-input';
+            title.type = 'text';
+            title.maxLength = 160;
+            title.value = todo.title;
+            title.setAttribute('aria-label', '업무 제목 수정');
+            title.addEventListener('change', () => {
+                const next = title.value.trim();
+                if (next && next !== todo.title) patchTodo(todo, { title: next });
+                else title.value = todo.title;
+            });
+        }
         const remove = document.createElement('button');
         remove.className = 'delete-todo';
         remove.type = 'button';
@@ -402,6 +427,29 @@
         dday.textContent = formatDDay(todo.dueDate);
         dueControls.append(due, dday);
         dueRow.append(dueLabel, dueControls);
+
+        if (isStructured) {
+            const facts = document.createElement('div');
+            facts.className = 'task-facts';
+            const factValues = [
+                ['날짜', formatTaskDate(todo.taskDate)],
+                ['대상', todo.taskTarget || ''],
+                ['인원', todo.headcount ? `${todo.headcount}명` : ''],
+            ];
+            factValues.filter(([, value]) => value).forEach(([label, value]) => {
+                const fact = document.createElement('div');
+                fact.className = 'task-fact';
+                const factLabel = document.createElement('span');
+                factLabel.className = 'task-fact-label';
+                factLabel.textContent = label;
+                const factValue = document.createElement('span');
+                factValue.className = 'task-fact-value';
+                factValue.textContent = value;
+                fact.append(factLabel, factValue);
+                facts.append(fact);
+            });
+            details.append(facts);
+        }
 
         const created = document.createElement('div');
         created.className = 'created-at';
@@ -484,10 +532,6 @@
             return;
         }
         try {
-            await request('/api/public/todos/initialize', {
-                method: 'POST',
-                body: JSON.stringify({ tourFldid: tour.fldid }),
-            });
             await request('/api/public/todos', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -535,7 +579,10 @@
         list.className = 'preview-list';
         result.items.slice(0, 8).forEach(item => {
             const li = document.createElement('li');
-            li.textContent = `${item.sentAt ? formatDateTime(item.sentAt) : '시각 미상'} · ${item.title}`;
+            const facts = [formatTaskDate(item.taskDate), item.target, item.headcount ? `${item.headcount}명` : '', item.action || item.title]
+                .filter(Boolean)
+                .join(' · ');
+            li.textContent = `${item.sentAt ? formatDateTime(item.sentAt) : '시각 미상'} · ${facts}`;
             list.append(li);
         });
         if (result.items.length > 8) {
@@ -586,15 +633,20 @@
         let created = 0;
         let duplicate = 0;
         try {
-            await request('/api/public/todos/initialize', {
-                method: 'POST',
-                body: JSON.stringify({ tourFldid }),
-            });
             for (const item of registrableItems) {
                 const createdAt = item.sentAt;
                 const data = await request('/api/public/todos', {
                     method: 'POST',
-                    body: JSON.stringify({ tourFldid, title: item.title, createdAt, sourceKey: item.sourceKey }),
+                    body: JSON.stringify({
+                        tourFldid,
+                        title: item.title,
+                        createdAt,
+                        sourceKey: item.sourceKey,
+                        taskDate: item.taskDate || null,
+                        taskTarget: item.target || null,
+                        headcount: item.headcount || null,
+                        taskAction: item.action || null,
+                    }),
                 });
                 if (data?.duplicate) duplicate += 1;
                 else created += 1;
