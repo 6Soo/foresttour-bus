@@ -33,7 +33,7 @@
         tourMeta: $('tourMeta'),
         authNotice: $('authNotice'),
         openKeyFromNotice: $('openKeyFromNotice'),
-        captureInput: $('captureInput'),
+        pasteZone: $('pasteZone'),
         captureFile: $('captureFile'),
         analyzeButton: $('analyzeButton'),
         captureStatus: $('captureStatus'),
@@ -447,10 +447,16 @@
         const top = document.createElement('div');
         top.className = 'preview-topline';
         const title = document.createElement('strong');
-        title.textContent = `${result.items.length}개 업무를 찾았습니다`;
+        title.textContent = tour ? '여행별 분류가 끝났습니다' : '분류할 여행을 골라 주세요';
         const dates = document.createElement('span');
         dates.textContent = `${formatDate(result.messageDate)}${result.tripDate ? ` · 여행 ${formatDate(result.tripDate)}` : ''}`;
         top.append(title, dates);
+        const matched = document.createElement('div');
+        matched.className = 'capture-group';
+        const matchedTitle = document.createElement('strong');
+        matchedTitle.className = 'capture-group-title';
+        matchedTitle.textContent = tour ? `🧳 ${tour.title}` : '🧳 reserve 여행과 자동 매칭되지 않았습니다';
+        matched.append(matchedTitle);
         const list = document.createElement('ul');
         list.className = 'preview-list';
         result.items.slice(0, 8).forEach(item => {
@@ -463,11 +469,12 @@
             more.textContent = `외 ${result.items.length - 8}개 업무`;
             list.append(more);
         }
-        elements.capturePreview.append(top, list);
+        matched.append(list);
+        elements.capturePreview.append(top, matched);
 
+        const actions = document.createElement('div');
+        actions.className = 'preview-actions';
         if (!result.tourFldid && result.items.length) {
-            const actions = document.createElement('div');
-            actions.className = 'preview-actions';
             const select = document.createElement('select');
             select.className = 'select-control';
             select.append(new Option('분류할 여행을 선택해 주세요', ''));
@@ -476,19 +483,23 @@
             const register = document.createElement('button');
             register.type = 'button';
             register.className = 'small-button';
-            register.textContent = '선택한 여행에 등록';
+            register.textContent = '이 여행에 등록';
             register.addEventListener('click', () => {
                 if (!select.value) return showToast('분류할 여행을 먼저 선택해 주세요.');
                 registerCapture(result, select.value);
             });
             actions.append(select, register);
-            elements.capturePreview.append(actions);
-        } else if (tour) {
-            const matched = document.createElement('p');
-            matched.className = 'trip-meta';
-            matched.textContent = `분류된 여행: ${tour.title}`;
-            elements.capturePreview.append(matched);
+        } else if (tour && result.items.length) {
+            const register = document.createElement('button');
+            register.type = 'button';
+            register.className = 'small-button';
+            register.textContent = `${result.items.length}개 일정 등록`;
+            register.disabled = !result.messageDate || !result.items.some(item => item.sentAt);
+            register.title = register.disabled ? '캡처 날짜와 메시지 전송 시각을 확인할 수 있어야 등록할 수 있습니다.' : '';
+            register.addEventListener('click', () => registerCapture(result, result.tourFldid));
+            actions.append(register);
         }
+        if (actions.children.length) elements.capturePreview.append(actions);
     }
 
     async function registerCapture(result, tourFldid) {
@@ -582,8 +593,7 @@
             if (!result.items?.length) {
                 setCaptureStatus('업무로 만들 수 있는 메시지를 찾지 못했습니다. 캡처를 확인해 주세요.', 'error');
             } else if (result.tourFldid && result.messageDate && result.items.some(item => item.sentAt)) {
-                setCaptureStatus('날짜가 맞는 여행을 찾았습니다. 곧 업무로 등록합니다…', 'success');
-                await registerCapture(result, result.tourFldid);
+                setCaptureStatus(`여행별 분류를 확인했습니다. 아래의 작은 등록 버튼을 눌러 ${result.items.length}개 업무를 저장해 주세요.`, 'success');
             } else if (result.tourFldid) {
                 setCaptureStatus('여행은 찾았지만 캡처 날짜·메시지 전송 시각을 모두 확인하지 못했습니다. 자동 등록하지 않았습니다.', 'error');
             } else {
@@ -599,14 +609,14 @@
         }
     }
 
-    function setSelectedFile(file) {
+    function setSelectedFile(file, { autoAnalyze = true } = {}) {
         state.selectedFile = null;
         state.selectedDataUrl = '';
-        elements.captureInput.value = '';
         elements.analyzeButton.disabled = true;
+        elements.analyzeButton.hidden = true;
         elements.capturePreview.hidden = true;
         if (!file) {
-            elements.captureFile.textContent = '선택된 캡처 없음';
+            elements.captureFile.textContent = '아직 붙여넣은 캡처 없음';
             return;
         }
         if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
@@ -618,12 +628,31 @@
             return;
         }
         state.selectedFile = file;
-        elements.captureFile.textContent = file.name;
+        elements.captureFile.textContent = file.name || '카카오톡 캡처';
+        elements.analyzeButton.hidden = false;
         elements.analyzeButton.disabled = !state.key;
-        setCaptureStatus(state.key ? '캡처를 선택했습니다. Gemini로 읽어 보세요.' : '운영 키를 입력하면 Gemini 판독을 시작할 수 있습니다.');
+        setCaptureStatus(state.key ? '캡처를 붙여넣었습니다. 여행별 분류를 시작합니다…' : '운영 키를 확인한 뒤 자동 분석합니다.');
         readFileAsDataUrl(file).then(dataUrl => {
             if (state.selectedFile === file) state.selectedDataUrl = dataUrl;
         }).catch(error => setCaptureStatus(error.message, 'error'));
+        if (state.key && autoAnalyze) window.setTimeout(() => analyzeCapture(), 0);
+        if (!state.key) showKeyModal();
+    }
+
+    function handlePaste(event) {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find(item => item.kind === 'file' && /^image\//.test(item.type));
+        const pastedIntoZone = event.target === elements.pasteZone || elements.pasteZone.contains(event.target);
+        if (!imageItem) {
+            if (pastedIntoZone) {
+                event.preventDefault();
+                showToast('카카오톡 캡처 이미지를 복사해서 붙여넣어 주세요.');
+            }
+            return;
+        }
+        event.preventDefault();
+        const file = imageItem.getAsFile();
+        if (file) setSelectedFile(file);
     }
 
     function bindEvents() {
@@ -648,6 +677,7 @@
                 hideKeyModal();
                 elements.analyzeButton.disabled = !state.selectedFile;
                 await loadTodos();
+                if (state.selectedFile) await analyzeCapture();
             } catch (error) {
                 setKey(previousKey);
                 if (error.status === 401) {
@@ -669,21 +699,12 @@
         });
         elements.closeComposer.addEventListener('click', () => { elements.taskComposer.hidden = true; });
         elements.taskForm.addEventListener('submit', createTodo);
-        elements.captureInput.addEventListener('change', event => setSelectedFile(event.target.files?.[0] || null));
         elements.analyzeButton.addEventListener('click', analyzeCapture);
         document.querySelectorAll('[data-tab-status]').forEach(button => {
             button.addEventListener('click', () => setActiveStatus(button.dataset.tabStatus));
         });
-        const drop = document.querySelector('.upload-drop');
-        ['dragenter', 'dragover'].forEach(name => drop.addEventListener(name, event => {
-            event.preventDefault();
-            drop.classList.add('is-dragging');
-        }));
-        ['dragleave', 'drop'].forEach(name => drop.addEventListener(name, event => {
-            event.preventDefault();
-            drop.classList.remove('is-dragging');
-        }));
-        drop.addEventListener('drop', event => setSelectedFile(event.dataTransfer.files?.[0] || null));
+        document.addEventListener('paste', handlePaste);
+        elements.pasteZone.addEventListener('click', () => elements.pasteZone.focus());
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
