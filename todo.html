@@ -46,26 +46,13 @@
                 <button class="text-button" id="openKeyFromNotice" type="button">입력하기</button>
             </section>
 
-            <section class="panel capture-panel" aria-labelledby="captureHeading">
-                <div class="section-heading">
+            <section class="capture-feedback" id="captureFeedback" hidden aria-labelledby="captureFeedbackHeading">
+                <div class="feedback-heading">
                     <div>
-                        <p class="section-label">업무 등록</p>
-                        <h2 id="captureHeading">카카오톡 캡처로 업무 등록</h2>
+                        <p class="section-label">클립보드 처리</p>
+                        <h2 id="captureFeedbackHeading">붙여넣은 캡처를 확인하고 있습니다</h2>
                     </div>
-                    <span class="capture-emoji">✨</span>
-                </div>
-                <p class="section-copy">페이지에서 카카오톡 캡처를 붙여넣으면 여행별로 먼저 분류합니다. 결과를 확인한 뒤 저장합니다.</p>
-                <p class="local-note">캡처 날짜는 여행 기준, 메시지 시각은 등록일시, 기한은 D+3입니다.</p>
-                <div class="paste-drop" id="pasteZone" contenteditable="true" role="textbox" aria-label="카카오톡 캡처 붙여넣기" aria-multiline="false" spellcheck="false">
-                    <span class="upload-icon">📋</span>
-                    <span class="paste-copy">
-                        <span class="upload-title">카카오톡 캡처 붙여넣기</span>
-                        <span class="upload-hint">PC는 Ctrl+V · 휴대폰은 길게 눌러 붙여넣기</span>
-                    </span>
-                </div>
-                <div class="capture-actions">
-                    <span class="capture-file" id="captureFile">아직 붙여넣은 캡처 없음</span>
-                    <button class="small-button" id="analyzeButton" type="button" disabled hidden>다시 분석</button>
+                    <button class="icon-button" id="closeCaptureFeedback" type="button" aria-label="캡처 결과 닫기">×</button>
                 </div>
                 <div class="capture-status" id="captureStatus" role="status" aria-live="polite"></div>
                 <div class="capture-preview" id="capturePreview" hidden></div>
@@ -91,13 +78,13 @@
                         <button class="icon-button" id="closeComposer" type="button" aria-label="업무 추가 닫기">×</button>
                     </div>
                     <form id="taskForm" class="task-form">
-                        <label class="field-label" for="taskTitle">업무 내용</label>
-                        <input id="taskTitle" class="text-input" type="text" maxlength="160" placeholder="예: 숙소 확정 여부 확인" required>
-                        <label class="field-label" for="tourSelect">등록할 여행</label>
+                        <label class="field-label" for="tourSelect">먼저 여행을 선택해 주세요</label>
                         <select id="tourSelect" class="select-control">
                             <option value="">여행 목록을 불러오는 중입니다…</option>
                         </select>
                         <div class="trip-meta" id="tourMeta">업무를 등록할 여행을 선택해 주세요.</div>
+                        <label class="field-label" for="taskTitle">업무 내용</label>
+                        <input id="taskTitle" class="text-input" type="text" maxlength="160" placeholder="예: 숙소 확정 여부 확인" required>
                         <div class="form-row">
                             <label class="field-label" for="taskAssignee">담당</label>
                             <select id="taskAssignee" class="select-control">
@@ -136,7 +123,7 @@
                 <div class="empty-board" id="emptyBoard" hidden>
                     <span>🌱</span>
                     <strong>아직 업무가 없습니다</strong>
-                    <p>캡처를 읽거나 업무 추가에서 여행을 골라 등록해 주세요.</p>
+                    <p>＋ 일정 등록을 눌러 여행을 선택한 뒤 업무를 적어 주세요.</p>
                 </div>
             </section>
         </main>
