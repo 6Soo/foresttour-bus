@@ -12,7 +12,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="todo.css?v=20260813-4">
+    <link rel="stylesheet" href="todo.css?v=20260813-5">
 </head>
 <body>
     <div class="app-shell">
@@ -49,8 +49,8 @@
             <section class="capture-feedback" id="captureFeedback" hidden aria-labelledby="captureFeedbackHeading">
                 <div class="feedback-heading">
                     <div>
-                        <p class="section-label">클립보드 처리</p>
-                        <h2 id="captureFeedbackHeading">붙여넣은 캡처를 확인하고 있습니다</h2>
+                        <p class="section-label">캡처 분석</p>
+                        <h2 id="captureFeedbackHeading">캡처에서 찾은 업무</h2>
                     </div>
                     <button class="icon-button" id="closeCaptureFeedback" type="button" aria-label="캡처 결과 닫기">×</button>
                 </div>
@@ -85,13 +85,7 @@
                         <div class="trip-meta" id="tourMeta">업무를 등록할 여행을 선택해 주세요.</div>
                         <label class="field-label" for="taskTitle">업무 내용</label>
                         <input id="taskTitle" class="text-input" type="text" maxlength="160" placeholder="예: 숙소 확정 여부 확인" required>
-                        <div class="form-row">
-                            <label class="field-label" for="taskAssignee">담당</label>
-                            <select id="taskAssignee" class="select-control">
-                                <option value="none">담당 없음</option>
-                                <option value="owner">운영이사님</option>
-                                <option value="director">대표님</option>
-                            </select>
+                        <div class="form-actions">
                             <button class="primary-button" type="submit">등록하기</button>
                         </div>
                     </form>
@@ -149,6 +143,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <noscript><div class="no-script">이 업무 보드는 JavaScript가 필요합니다.</div></noscript>
-    <script src="todo.js?v=20260813-4" defer></script>
+    <script src="todo.js?v=20260813-5" defer></script>
 </body>
 </html>

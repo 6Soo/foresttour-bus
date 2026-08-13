@@ -6,7 +6,6 @@
     const KEY_STORAGE = 'foresttour-todo-admin-key-v1';
     const STATUS_LABELS = { todo: '할 일', doing: '진행중', done: '완료' };
     const STATUS_EMOJIS = { todo: '📝', doing: '🏃', done: '🎉' };
-    const ASSIGNEE_LABELS = { none: '담당 없음', owner: '운영이사님', director: '대표님' };
 
     const state = {
         key: readStoredKey(),
@@ -42,7 +41,6 @@
         closeComposer: $('closeComposer'),
         taskForm: $('taskForm'),
         taskTitle: $('taskTitle'),
-        taskAssignee: $('taskAssignee'),
         board: $('board'),
         emptyBoard: $('emptyBoard'),
         toast: $('toast'),
@@ -330,28 +328,16 @@
         due.addEventListener('change', () => patchTodo(todo, { dueDate: due.value || null }));
         dueRow.append(dueLabel, due);
 
-        const assigneeRow = document.createElement('div');
-        assigneeRow.className = 'detail-row';
-        const assigneeLabel = document.createElement('span');
-        assigneeLabel.className = 'detail-label';
-        assigneeLabel.textContent = '🙋 담당';
-        const assignee = document.createElement('select');
-        assignee.className = 'select-control assignee-select';
-        Object.entries(ASSIGNEE_LABELS).forEach(([value, label]) => assignee.append(new Option(label, value)));
-        assignee.value = todo.assignee || 'none';
-        assignee.setAttribute('aria-label', '업무 담당자 수정');
-        assignee.addEventListener('change', () => patchTodo(todo, { assignee: assignee.value }));
-        assigneeRow.append(assigneeLabel, assignee);
-
         const created = document.createElement('div');
         created.className = 'created-at';
         created.textContent = `등록 ${formatDateTime(todo.createdAt)}`;
         const tourInfo = document.createElement('div');
-        tourInfo.className = 'todo-tour';
+        tourInfo.className = 'todo-trip-meta';
+        tourInfo.setAttribute('aria-label', '등록된 여행 정보');
         tourInfo.textContent = tour
             ? `🧳 ${tour.title}${tour.date ? ` · ${formatDate(tour.date)}` : ''}`
             : `🧳 여행 ${todo.tourFldid}`;
-        details.append(tourInfo, dueRow, assigneeRow, created);
+        details.append(tourInfo, dueRow, created);
 
         const actions = document.createElement('div');
         actions.className = 'card-actions';
@@ -438,7 +424,6 @@
                 body: JSON.stringify({
                     tourFldid: tour.fldid,
                     title,
-                    assignee: elements.taskAssignee.value,
                 }),
             });
             elements.taskForm.reset();
