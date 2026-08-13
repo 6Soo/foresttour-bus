@@ -71,7 +71,7 @@
         storeKey(state.key);
         elements.keyButton.classList.toggle('is-ready', Boolean(state.key));
         elements.keyIcon.textContent = state.key ? '🔓' : '🔐';
-        elements.keyLabel.textContent = state.key ? '연결됨' : '운영 키';
+        elements.keyLabel.textContent = state.key ? '키 확인됨' : '운영 키';
         elements.authNotice.hidden = Boolean(state.key);
     }
 
@@ -137,7 +137,7 @@
         state.todos = [];
         renderAll();
         showKeyModal();
-        elements.keyError.textContent = '운영 키를 확인해 주세요.';
+        elements.keyError.textContent = '운영 키가 맞지 않거나 reserve 서버에 아직 등록되지 않았습니다.';
         return true;
     }
 
@@ -211,19 +211,14 @@
     }
 
     async function loadTodos() {
-        const tour = selectedTour();
-        if (!state.key || !tour) {
+        if (!state.key) {
             state.todos = [];
             renderAll();
             return;
         }
         elements.board.classList.add('is-loading');
         try {
-            await request('/api/public/todos/initialize', {
-                method: 'POST',
-                body: JSON.stringify({ tourFldid: tour.fldid }),
-            });
-            const data = await request(`/api/public/todos?tourFldid=${encodeURIComponent(tour.fldid)}`);
+            const data = await request('/api/public/todos');
             state.todos = Array.isArray(data?.todos) ? data.todos : [];
             renderAll();
         } catch (error) {
@@ -243,7 +238,7 @@
 
     function renderAuth() {
         elements.authNotice.hidden = Boolean(state.key);
-        elements.addTaskButton.disabled = !state.key || !selectedTour();
+        elements.addTaskButton.disabled = !state.key;
     }
 
     function renderStats() {
@@ -276,13 +271,14 @@
                 todos.forEach(todo => list.append(createTodoCard(todo)));
             }
         });
-        elements.emptyBoard.hidden = !state.key || !selectedTour() || state.todos.length > 0;
+        elements.emptyBoard.hidden = !state.key || state.todos.length > 0;
     }
 
     function createTodoCard(todo) {
         const card = document.createElement('article');
         card.className = `todo-card${todo.status === 'done' ? ' is-done' : ''}`;
         card.dataset.id = todo.id;
+        const tour = state.tours.find(item => item.fldid === todo.tourFldid);
 
         const topline = document.createElement('div');
         topline.className = 'card-topline';
@@ -339,7 +335,12 @@
         const created = document.createElement('div');
         created.className = 'created-at';
         created.textContent = `등록 ${formatDateTime(todo.createdAt)}`;
-        details.append(dueRow, assigneeRow, created);
+        const tourInfo = document.createElement('div');
+        tourInfo.className = 'todo-tour';
+        tourInfo.textContent = tour
+            ? `🧳 ${tour.title}${tour.date ? ` · ${formatDate(tour.date)}` : ''}`
+            : `🧳 여행 ${todo.tourFldid}`;
+        details.append(tourInfo, dueRow, assigneeRow, created);
 
         const actions = document.createElement('div');
         actions.className = 'card-actions';
@@ -408,6 +409,10 @@
         const title = elements.taskTitle.value.trim();
         if (!tour || !title || !state.key) return;
         try {
+            await request('/api/public/todos/initialize', {
+                method: 'POST',
+                body: JSON.stringify({ tourFldid: tour.fldid }),
+            });
             await request('/api/public/todos', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -496,6 +501,10 @@
         let created = 0;
         let duplicate = 0;
         try {
+            await request('/api/public/todos/initialize', {
+                method: 'POST',
+                body: JSON.stringify({ tourFldid }),
+            });
             for (const item of registrableItems) {
                 const createdAt = item.sentAt;
                 const data = await request('/api/public/todos', {
@@ -632,19 +641,29 @@
                 elements.keyError.textContent = '운영 키를 입력해 주세요.';
                 return;
             }
+            const previousKey = state.key;
             setKey(value);
-            hideKeyModal();
-            elements.analyzeButton.disabled = !state.selectedFile;
-            await loadTodos();
+            try {
+                await request('/api/public/todos');
+                hideKeyModal();
+                elements.analyzeButton.disabled = !state.selectedFile;
+                await loadTodos();
+            } catch (error) {
+                setKey(previousKey);
+                if (error.status === 401) {
+                    elements.keyError.textContent = '운영 키가 맞지 않거나 reserve 서버에 TODO_ADMIN_KEY가 아직 등록되지 않았습니다.';
+                } else {
+                    elements.keyError.textContent = error.message;
+                }
+            }
         });
         elements.tourSelect.addEventListener('change', async () => {
             state.selectedTourFldid = elements.tourSelect.value;
             renderTourMeta();
-            await loadTodos();
         });
         elements.addTaskButton.addEventListener('click', () => {
             if (!state.key) return showKeyModal();
-            if (!selectedTour()) return showToast('여행을 먼저 선택해 주세요.');
+            if (!state.tours.length) return showToast('등록할 여행 목록이 아직 없습니다.');
             elements.taskComposer.hidden = false;
             elements.taskTitle.focus();
         });

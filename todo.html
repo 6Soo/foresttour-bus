@@ -34,27 +34,7 @@
             <section class="hero-block">
                 <p class="eyebrow">대표님과 운영이사님을 위한 공간</p>
                 <h1>여행의 다음 일을<br><em>같이 챙겨요.</em> 🗂️</h1>
-                <p class="hero-copy">reserve의 여행 일정마다 기본 업무를 준비해 두었습니다.<br>카카오톡 캡처는 Gemini가 읽어 날짜별 업무로 정리합니다.</p>
-                <div class="hero-pills" aria-label="기능 요약">
-                    <span>📅 등록일 기준 D+3</span>
-                    <span>✍️ 언제든 수정</span>
-                    <span>📱 모바일 최적화</span>
-                </div>
-            </section>
-
-            <section class="panel trip-panel" aria-labelledby="tripHeading">
-                <div class="section-heading compact-heading">
-                    <div>
-                        <p class="section-label">STEP 01</p>
-                        <h2 id="tripHeading">어느 여행을 볼까요?</h2>
-                    </div>
-                    <span class="trip-emoji">🧳</span>
-                </div>
-                <label class="field-label" for="tourSelect">여행 일정</label>
-                <select id="tourSelect" class="select-control">
-                    <option value="">여행 목록을 불러오는 중입니다…</option>
-                </select>
-                <div class="trip-meta" id="tourMeta">일정을 선택하면 기본 업무가 준비됩니다.</div>
+                <p class="hero-copy">업무는 모든 여행을 한 번에 보고, 새 업무를 등록할 때만 여행을 골라요.<br>카카오톡 캡처는 Gemini가 읽어 날짜와 메시지 시각을 담습니다.</p>
             </section>
 
             <section class="auth-notice" id="authNotice" hidden>
@@ -92,13 +72,13 @@
             <section class="panel capture-panel" aria-labelledby="captureHeading">
                 <div class="section-heading">
                     <div>
-                        <p class="section-label">STEP 02 · GEMINI</p>
+                        <p class="section-label">업무 등록</p>
                         <h2 id="captureHeading">카카오톡 캡처로 업무 등록</h2>
                     </div>
                     <span class="capture-emoji">✨</span>
                 </div>
                 <p class="section-copy">캡처 속 날짜로 여행을 찾고, 메시지 전송 시각을 업무 등록 시각으로 남깁니다.</p>
-                <p class="local-note">처음 사용하기 전, 로컬 터미널에서 <code>node tools/todo/gemini-capture-bridge.mjs</code>를 한 번 실행해 주세요.</p>
+                <p class="local-note">캡처의 날짜와 메시지 전송 시각을 확인할 수 있을 때만 자동 등록합니다.</p>
                 <label class="upload-drop" for="captureInput">
                     <span class="upload-icon">📸</span>
                     <span class="upload-title">카카오톡 캡처를 선택해 주세요</span>
@@ -116,8 +96,8 @@
             <section class="board-section" aria-labelledby="boardHeading">
                 <div class="board-heading">
                     <div>
-                        <p class="section-label">STEP 03 · BOARD</p>
-                        <h2 id="boardHeading">오늘의 업무 보드</h2>
+                        <p class="section-label">전체 업무</p>
+                        <h2 id="boardHeading">전체 업무 보드</h2>
                     </div>
                     <button class="outline-button" id="addTaskButton" type="button">＋ 업무 추가</button>
                 </div>
@@ -135,6 +115,11 @@
                     <form id="taskForm" class="task-form">
                         <label class="field-label" for="taskTitle">업무 내용</label>
                         <input id="taskTitle" class="text-input" type="text" maxlength="160" placeholder="예: 숙소 확정 여부 확인" required>
+                        <label class="field-label" for="tourSelect">등록할 여행</label>
+                        <select id="tourSelect" class="select-control">
+                            <option value="">여행 목록을 불러오는 중입니다…</option>
+                        </select>
+                        <div class="trip-meta" id="tourMeta">업무를 등록할 여행을 선택해 주세요.</div>
                         <div class="form-row">
                             <label class="field-label" for="taskAssignee">담당</label>
                             <select id="taskAssignee" class="select-control">
@@ -173,7 +158,7 @@
                 <div class="empty-board" id="emptyBoard" hidden>
                     <span>🌱</span>
                     <strong>아직 업무가 없습니다</strong>
-                    <p>여행을 선택하면 기본 업무가 자동으로 생깁니다.</p>
+                    <p>캡처를 읽거나 업무 추가에서 여행을 골라 등록해 주세요.</p>
                 </div>
             </section>
         </main>
