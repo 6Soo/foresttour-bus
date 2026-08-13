@@ -150,6 +150,30 @@ function normalizeDate(value) {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === result ? result : null;
 }
 
+function normalizeTaskDate(value, fallbackYear) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const raw = value.trim();
+  const fullDate = normalizeDate(raw);
+  if (fullDate) return fullDate;
+  const match = raw.match(/(?:^|[^\d])(\d{1,2})\s*(?:[./-]|월)\s*(\d{1,2})\s*일?/);
+  if (!match) return null;
+  const result = `${fallbackYear}-${pad(match[1])}-${pad(match[2])}`;
+  if (!DATE_RE.test(result)) return null;
+  const parsed = new Date(`${result}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === result ? result : null;
+}
+
+function normalizeHeadcount(value) {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) && value >= 1 && value <= 999 ? value : null;
+  }
+  if (typeof value !== 'string') return null;
+  const match = value.replace(/,/g, '').match(/\d{1,3}/);
+  if (!match) return null;
+  const count = Number(match[0]);
+  return Number.isInteger(count) && count >= 1 && count <= 999 ? count : null;
+}
+
 function kstToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
@@ -200,6 +224,7 @@ function extractJson(text) {
 function normalizeResult(raw, tours, captureId) {
   const messageDate = normalizeDate(raw?.messageDate || raw?.chatDate || raw?.date);
   const tripDate = normalizeDate(raw?.tripDate || raw?.travelDate || raw?.scheduleDate);
+  const fallbackYear = (messageDate || tripDate || kstToday()).slice(0, 4);
   const tourFldid = matchTour(tours, raw?.tourFldid, tripDate);
   const inputItems = Array.isArray(raw?.items)
     ? raw.items
@@ -207,26 +232,42 @@ function normalizeResult(raw, tours, captureId) {
   const seen = new Set();
   const items = inputItems
     .slice(0, MAX_ITEMS)
-    .map((item, index) => {
+    .map(item => {
+      const taskDate = normalizeTaskDate(
+        typeof item === 'object' ? item?.taskDate || item?.date || item?.scheduleDate : null,
+        fallbackYear,
+      );
+      const target = cleanText(
+        typeof item === 'object' ? item?.target || item?.subject || item?.route : null,
+        120,
+      ) || null;
+      const headcount = normalizeHeadcount(
+        typeof item === 'object' ? item?.headcount || item?.people || item?.count : null,
+      );
+      const action = cleanText(
+        typeof item === 'object' ? item?.action || item?.todo || item?.actionItem : null,
+        80,
+      ) || null;
       const title = cleanText(
-        typeof item === 'string' ? item : item?.title || item?.task || item?.summary,
+        typeof item === 'string' ? item : item?.title || item?.task || item?.summary || action || target || '일정 확인',
       );
       const sentAt = normalizeSentAt(
         typeof item === 'object' ? item?.sentAt || item?.time || item?.messageTime : null,
         messageDate,
       );
-      const key = `${title}\u0000${sentAt || ''}`;
+      const key = `${title}\u0000${taskDate || ''}\u0000${target || ''}\u0000${headcount || ''}\u0000${action || ''}\u0000${sentAt || ''}`;
       if (!title || seen.has(key)) return null;
       seen.add(key);
-      // Gemini의 m1/m2 순서와 표현이 달라져도 같은 캡처·같은 전송 시각이면 중복 처리한다.
-      // 같은 분에 여러 업무가 있으면 하나로 합쳐질 수 있으므로 화면에서 시각 확인을 유도한다.
-      const stableKey = sentAt
-        ? sentAt.replace(/\D/g, '')
-        : crypto.createHash('sha256').update(title).digest('hex').slice(0, 20);
+      const stableSeed = [sentAt || '', taskDate || '', target || '', headcount || '', action || '', title].join('|');
+      const stableKey = crypto.createHash('sha256').update(stableSeed).digest('hex').slice(0, 20);
       return {
         title,
         sentAt,
         sourceKey: `${captureId.slice(0, 16)}:${stableKey}`,
+        taskDate,
+        target,
+        headcount,
+        action,
       };
     })
     .filter(Boolean);
@@ -242,11 +283,15 @@ function promptFor(tours) {
 반드시 지켜 주세요.
 1. 답변은 설명·마크다운 없이 JSON 객체 하나만 출력합니다.
 2. 캡처 상단의 대화 날짜를 messageDate에 YYYY-MM-DD로 기록합니다. 연도가 없으면 현재 연도(${kstToday().slice(0, 4)})를 사용하고, 날짜가 보이지 않으면 null입니다.
-3. 대화 안의 여행 출발일 또는 일정 날짜를 tripDate에 YYYY-MM-DD로 기록합니다. 여러 날짜가 있으면 여행 출발일을 우선합니다.
-4. 각 업무의 sentAt에는 해당 메시지에 표시된 전송 시각을 messageDate 기준 한국시간 ISO 형식(예: 2026-08-13T14:20:00+09:00)으로 기록합니다. 시각이 없으면 null입니다.
-5. 업무 제목에는 사람 이름, 전화번호, 계좌번호, 여권번호를 넣지 말고 행동 중심으로 160자 이내로 씁니다. 단순 인사·감탄·반복 대화는 제외합니다.
-6. 아래 reserve 여행 목록 중 날짜가 정확히 일치하거나 출발일~귀국일 범위에 들어가는 여행의 fldid를 tourFldid에 넣습니다. 확신이 없으면 null입니다.
-7. items는 실제로 처리할 업무만 배열로 만들고, sourceKey는 메시지 순서에 따른 m1, m2처럼 안정적인 짧은 키를 사용합니다.
+3. 대화 안의 여행 출발일 또는 대표 일정 날짜를 tripDate에 YYYY-MM-DD로 기록합니다. 여러 날짜가 있으면 여행 출발일을 우선합니다.
+4. 각 업무의 taskDate에는 그 업무가 실행될 날짜를 YYYY-MM-DD로 기록합니다. 캡처에 8.27, 8/27, 8월 27일처럼 연도가 없으면 messageDate의 연도를 사용합니다. 메시지마다 날짜가 다르면 반드시 업무를 나눕니다.
+5. target에는 해당 날짜의 운항·방문 대상만 짧게 적습니다. 예: 장자도·방축도·말도 운항.
+6. headcount에는 메시지에서 확인되는 인원을 숫자만 적습니다. 예: 29명은 29.
+7. action에는 실제로 해야 할 행동을 적습니다. 단체예약 가능 여부를 전화로 확인하라는 문맥(예: '29명 단체예약 가능한지', '전화요')은 반드시 '전화예약'으로 정리합니다.
+8. 각 업무의 sentAt에는 해당 메시지에 표시된 전송 시각을 messageDate 기준 한국시간 ISO 형식(예: 2026-08-13T14:20:00+09:00)으로 기록합니다. 시각이 없으면 null입니다.
+9. title에는 사람 이름, 전화번호, 계좌번호, 여권번호를 넣지 말고 짧은 요약이나 행동을 160자 이내로 씁니다. 단순 인사·감탄·반복 대화는 제외합니다.
+10. 아래 reserve 여행 목록 중 날짜가 정확히 일치하거나 출발일~귀국일 범위에 들어가는 여행의 fldid를 tourFldid에 넣습니다. 확신이 없으면 null입니다.
+11. items는 실제로 처리할 업무만 배열로 만들고, sourceKey는 메시지 순서에 따른 m1, m2처럼 안정적인 짧은 키를 사용합니다.
 
 JSON 스키마:
 {
@@ -254,7 +299,7 @@ JSON 스키마:
   "tripDate": "YYYY-MM-DD|null",
   "tourFldid": "reserve의 fldid|null",
   "items": [
-    {"title": "업무 제목", "sentAt": "YYYY-MM-DDTHH:mm:ss+09:00|null", "sourceKey": "m1"}
+    {"title": "짧은 업무 요약", "taskDate": "YYYY-MM-DD|null", "target": "대상|null", "headcount": 29, "action": "전화예약|null", "sentAt": "YYYY-MM-DDTHH:mm:ss+09:00|null", "sourceKey": "m1"}
   ]
 }
 
