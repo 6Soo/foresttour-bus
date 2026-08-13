@@ -46,38 +46,6 @@
                 <button class="text-button" id="openKeyFromNotice" type="button">입력하기</button>
             </section>
 
-            <section class="stats-section" aria-labelledby="statsHeading">
-                <div class="stats-heading">
-                    <div>
-                        <p class="section-label">현황 요약</p>
-                        <h2 id="statsHeading">숫자로 빠르게 보기</h2>
-                    </div>
-                    <span>아래 보드의 업무 개수입니다</span>
-                </div>
-                <div class="stats-grid" aria-label="업무 현황">
-                    <div class="stat-card stat-all">
-                        <span class="stat-emoji">🌿</span>
-                        <span class="stat-number" id="statAll">–</span>
-                        <span class="stat-caption">전체 업무</span>
-                    </div>
-                    <div class="stat-card stat-todo">
-                        <span class="stat-emoji">📝</span>
-                        <span class="stat-number" id="statTodo">–</span>
-                        <span class="stat-caption">할 일</span>
-                    </div>
-                    <div class="stat-card stat-doing">
-                        <span class="stat-emoji">🏃</span>
-                        <span class="stat-number" id="statDoing">–</span>
-                        <span class="stat-caption">진행중</span>
-                    </div>
-                    <div class="stat-card stat-done">
-                        <span class="stat-emoji">🎉</span>
-                        <span class="stat-number" id="statDone">–</span>
-                        <span class="stat-caption">완료</span>
-                    </div>
-                </div>
-            </section>
-
             <section class="panel capture-panel" aria-labelledby="captureHeading">
                 <div class="section-heading">
                     <div>
@@ -86,12 +54,14 @@
                     </div>
                     <span class="capture-emoji">✨</span>
                 </div>
-                <p class="section-copy">카카오톡 캡처를 복사한 뒤 이곳에 붙여넣으면, 먼저 여행별로 분류합니다. 결과를 확인한 뒤 작은 등록 버튼을 눌러 업무를 저장합니다.</p>
-                <p class="local-note">캡처 날짜는 여행을 찾는 기준으로, 메시지 전송 시각은 업무 등록일시로 남깁니다. 기한은 자동으로 D+3입니다.</p>
+                <p class="section-copy">페이지에서 카카오톡 캡처를 붙여넣으면 여행별로 먼저 분류합니다. 결과를 확인한 뒤 저장합니다.</p>
+                <p class="local-note">캡처 날짜는 여행 기준, 메시지 시각은 등록일시, 기한은 D+3입니다.</p>
                 <div class="paste-drop" id="pasteZone" contenteditable="true" role="textbox" aria-label="카카오톡 캡처 붙여넣기" aria-multiline="false" spellcheck="false">
                     <span class="upload-icon">📋</span>
-                    <span class="upload-title">카카오톡 캡처를 여기에 붙여넣으세요</span>
-                    <span class="upload-hint">PC는 Ctrl+V · 휴대폰은 길게 눌러 붙여넣기</span>
+                    <span class="paste-copy">
+                        <span class="upload-title">카카오톡 캡처 붙여넣기</span>
+                        <span class="upload-hint">PC는 Ctrl+V · 휴대폰은 길게 눌러 붙여넣기</span>
+                    </span>
                 </div>
                 <div class="capture-actions">
                     <span class="capture-file" id="captureFile">아직 붙여넣은 캡처 없음</span>

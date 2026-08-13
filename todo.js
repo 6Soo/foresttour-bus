@@ -244,10 +244,6 @@
     function renderStats() {
         const counts = { todo: 0, doing: 0, done: 0 };
         state.todos.forEach(todo => { if (counts[todo.status] !== undefined) counts[todo.status] += 1; });
-        $('statAll').textContent = state.key ? String(state.todos.length) : '–';
-        $('statTodo').textContent = state.key ? String(counts.todo) : '–';
-        $('statDoing').textContent = state.key ? String(counts.doing) : '–';
-        $('statDone').textContent = state.key ? String(counts.done) : '–';
         $('countTodo').textContent = counts.todo;
         $('countDoing').textContent = counts.doing;
         $('countDone').textContent = counts.done;
