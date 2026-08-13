@@ -33,9 +33,8 @@
         tourMeta: $('tourMeta'),
         authNotice: $('authNotice'),
         openKeyFromNotice: $('openKeyFromNotice'),
-        pasteZone: $('pasteZone'),
-        captureFile: $('captureFile'),
-        analyzeButton: $('analyzeButton'),
+        captureFeedback: $('captureFeedback'),
+        closeCaptureFeedback: $('closeCaptureFeedback'),
         captureStatus: $('captureStatus'),
         capturePreview: $('capturePreview'),
         addTaskButton: $('addTaskButton'),
@@ -241,6 +240,17 @@
         elements.addTaskButton.disabled = !state.key;
     }
 
+    function openTaskComposer() {
+        if (!state.key) return showKeyModal();
+        if (!state.tours.length) return showToast('reserve 여행을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
+        const tour = selectedTour() || state.tours[0];
+        state.selectedTourFldid = tour.fldid;
+        elements.tourSelect.value = tour.fldid;
+        renderTourMeta();
+        elements.taskComposer.hidden = false;
+        elements.taskTitle.focus();
+    }
+
     function renderStats() {
         const counts = { todo: 0, doing: 0, done: 0 };
         state.todos.forEach(todo => { if (counts[todo.status] !== undefined) counts[todo.status] += 1; });
@@ -403,7 +413,16 @@
         event.preventDefault();
         const tour = selectedTour();
         const title = elements.taskTitle.value.trim();
-        if (!tour || !title || !state.key) return;
+        if (!state.key) return showKeyModal();
+        if (!tour) {
+            showToast('등록할 여행을 먼저 선택해 주세요.');
+            elements.tourSelect.focus();
+            return;
+        }
+        if (!title) {
+            elements.taskTitle.focus();
+            return;
+        }
         try {
             await request('/api/public/todos/initialize', {
                 method: 'POST',
@@ -564,7 +583,6 @@
         if (!state.selectedFile) return;
         if (!state.key) return showKeyModal();
         if (!state.tours.length) return showToast('reserve 여행 목록이 아직 없습니다.');
-        elements.analyzeButton.disabled = true;
         setCaptureStatus('Gemini가 캡처의 날짜와 메시지 시각을 읽고 있습니다…', 'loading');
         elements.capturePreview.hidden = true;
         try {
@@ -600,19 +618,16 @@
                 ? 'Gemini 서버와 로컬 브리지에 연결하지 못했습니다. 로컬 사용 시 안내된 명령으로 브리지를 먼저 실행해 주세요.'
                 : error.message;
             setCaptureStatus(message, 'error');
-        } finally {
-            elements.analyzeButton.disabled = false;
         }
     }
 
-    function setSelectedFile(file, { autoAnalyze = true } = {}) {
+    function setSelectedFile(file) {
         state.selectedFile = null;
         state.selectedDataUrl = '';
-        elements.analyzeButton.disabled = true;
-        elements.analyzeButton.hidden = true;
+        elements.captureFeedback.hidden = false;
         elements.capturePreview.hidden = true;
         if (!file) {
-            elements.captureFile.textContent = '아직 붙여넣은 캡처 없음';
+            elements.captureFeedback.hidden = true;
             return;
         }
         if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
@@ -624,28 +639,18 @@
             return;
         }
         state.selectedFile = file;
-        elements.captureFile.textContent = file.name || '카카오톡 캡처';
-        elements.analyzeButton.hidden = false;
-        elements.analyzeButton.disabled = !state.key;
         setCaptureStatus(state.key ? '캡처를 붙여넣었습니다. 여행별 분류를 시작합니다…' : '운영 키를 확인한 뒤 자동 분석합니다.');
         readFileAsDataUrl(file).then(dataUrl => {
             if (state.selectedFile === file) state.selectedDataUrl = dataUrl;
         }).catch(error => setCaptureStatus(error.message, 'error'));
-        if (state.key && autoAnalyze) window.setTimeout(() => analyzeCapture(), 0);
+        if (state.key) window.setTimeout(() => analyzeCapture(), 0);
         if (!state.key) showKeyModal();
     }
 
     function handlePaste(event) {
         const items = Array.from(event.clipboardData?.items || []);
         const imageItem = items.find(item => item.kind === 'file' && /^image\//.test(item.type));
-        const pastedIntoZone = event.target === elements.pasteZone || elements.pasteZone.contains(event.target);
-        if (!imageItem) {
-            if (pastedIntoZone) {
-                event.preventDefault();
-                showToast('카카오톡 캡처 이미지를 복사해서 붙여넣어 주세요.');
-            }
-            return;
-        }
+        if (!imageItem) return;
         event.preventDefault();
         const file = imageItem.getAsFile();
         if (file) setSelectedFile(file);
@@ -671,7 +676,6 @@
             try {
                 await request('/api/public/todos');
                 hideKeyModal();
-                elements.analyzeButton.disabled = !state.selectedFile;
                 await loadTodos();
                 if (state.selectedFile) await analyzeCapture();
             } catch (error) {
@@ -687,20 +691,17 @@
             state.selectedTourFldid = elements.tourSelect.value;
             renderTourMeta();
         });
-        elements.addTaskButton.addEventListener('click', () => {
-            if (!state.key) return showKeyModal();
-            if (!state.tours.length) return showToast('등록할 여행 목록이 아직 없습니다.');
-            elements.taskComposer.hidden = false;
-            elements.taskTitle.focus();
-        });
+        elements.addTaskButton.addEventListener('click', openTaskComposer);
         elements.closeComposer.addEventListener('click', () => { elements.taskComposer.hidden = true; });
         elements.taskForm.addEventListener('submit', createTodo);
-        elements.analyzeButton.addEventListener('click', analyzeCapture);
+        elements.closeCaptureFeedback.addEventListener('click', () => {
+            elements.captureFeedback.hidden = true;
+            elements.capturePreview.hidden = true;
+        });
         document.querySelectorAll('[data-tab-status]').forEach(button => {
             button.addEventListener('click', () => setActiveStatus(button.dataset.tabStatus));
         });
         document.addEventListener('paste', handlePaste);
-        elements.pasteZone.addEventListener('click', () => elements.pasteZone.focus());
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
