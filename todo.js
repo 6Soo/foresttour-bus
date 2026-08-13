@@ -115,6 +115,39 @@
         return `${formatDate(tour.date)} — ${formatDate(tour.returnDate)}`;
     }
 
+    function tourTitleIncludesDate(tour) {
+        if (!tour?.title || !tour.date) return false;
+        const [year, month, day] = tour.date.split('-');
+        const monthNumber = Number(month);
+        const dayNumber = Number(day);
+        return new RegExp(
+            `(?:${year}[-./ ]?${monthNumber}[-./ ]?${dayNumber}|${monthNumber}\\s*월\\s*${dayNumber}|${monthNumber}\\s*[./-]\\s*${dayNumber})`,
+        ).test(tour.title);
+    }
+
+    function tourDisplayTitle(tour) {
+        if (!tour) return '여행 정보 없음';
+        return tourTitleIncludesDate(tour) || !tour.date
+            ? tour.title
+            : `${tour.title} · ${formatDateRange(tour)}`;
+    }
+
+    function daysUntil(value) {
+        if (!value) return null;
+        const parse = date => {
+            const [year, month, day] = date.split('-').map(Number);
+            return Date.UTC(year, month - 1, day);
+        };
+        return Math.round((parse(value) - parse(todayKst())) / 86400000);
+    }
+
+    function formatDDay(value) {
+        const difference = daysUntil(value);
+        if (difference === null) return '기한 없음';
+        if (difference === 0) return 'D-DAY';
+        return difference > 0 ? `D-${difference}` : `D+${Math.abs(difference)}`;
+    }
+
     function formatDateTime(value) {
         if (!value) return '등록 시각 미상';
         const date = new Date(value);
@@ -190,8 +223,7 @@
         }
         elements.tourSelect.disabled = false;
         state.tours.forEach(tour => {
-            const label = tour.date ? `${formatDate(tour.date)} · ${tour.title}` : tour.title;
-            elements.tourSelect.append(new Option(label, tour.fldid));
+            elements.tourSelect.append(new Option(tourDisplayTitle(tour), tour.fldid));
         });
     }
 
@@ -202,9 +234,11 @@
             return;
         }
         elements.tourMeta.replaceChildren();
-        const range = document.createElement('strong');
-        range.textContent = formatDateRange(tour);
-        elements.tourMeta.append(range, ` · ${tour.nights ? `${tour.nights}박` : '여행'}${tour.leader ? ` · ${tour.leader} 대장` : ''}`);
+        const meta = [];
+        if (!tourTitleIncludesDate(tour)) meta.push(formatDateRange(tour));
+        meta.push(tour.nights ? `${tour.nights}박` : '여행');
+        if (tour.leader) meta.push(`${tour.leader} 대장`);
+        elements.tourMeta.textContent = meta.join(' · ');
     }
 
     async function loadTodos() {
@@ -252,9 +286,6 @@
     function renderStats() {
         const counts = { todo: 0, doing: 0, done: 0 };
         state.todos.forEach(todo => { if (counts[todo.status] !== undefined) counts[todo.status] += 1; });
-        $('countTodo').textContent = counts.todo;
-        $('countDoing').textContent = counts.doing;
-        $('countDone').textContent = counts.done;
         $('tabCountTodo').textContent = counts.todo;
         $('tabCountDoing').textContent = counts.doing;
         $('tabCountDone').textContent = counts.done;
@@ -263,18 +294,57 @@
     function renderBoard() {
         elements.board.dataset.activeStatus = state.activeStatus;
         elements.board.hidden = !state.key;
-        ['todo', 'doing', 'done'].forEach(status => {
-            const list = $(`list${status[0].toUpperCase()}${status.slice(1)}`);
-            list.replaceChildren();
-            const todos = state.todos.filter(todo => todo.status === status);
-            if (!todos.length) {
-                const empty = document.createElement('div');
-                empty.className = 'empty-column';
-                empty.textContent = status === 'done' ? '완료한 업무가 여기에 모입니다.' : '아직 등록된 업무가 없습니다.';
-                list.append(empty);
-            } else {
-                todos.forEach(todo => list.append(createTodoCard(todo)));
+        elements.board.replaceChildren();
+        const groups = new Map();
+        state.todos.forEach(todo => {
+            const key = todo.tourFldid || 'unknown';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(todo);
+        });
+        groups.forEach((groupTodos, tourFldid) => {
+            const tour = state.tours.find(item => item.fldid === tourFldid);
+            const group = document.createElement('section');
+            group.className = 'trip-group';
+            const groupHeading = document.createElement('div');
+            groupHeading.className = 'trip-group-heading';
+            const groupTitle = document.createElement('strong');
+            groupTitle.textContent = `🧳 ${tour ? tourDisplayTitle(tour) : `여행 ${tourFldid}`}`;
+            groupHeading.append(groupTitle);
+            if (tour?.returnDate && !tourTitleIncludesDate(tour)) {
+                const range = document.createElement('span');
+                range.textContent = formatDateRange(tour);
+                groupHeading.append(range);
             }
+            const groupBoard = document.createElement('div');
+            groupBoard.className = 'trip-group-board';
+            ['todo', 'doing', 'done'].forEach(status => {
+                const column = document.createElement('article');
+                column.className = `board-column column-${status}`;
+                column.dataset.columnStatus = status;
+                const heading = document.createElement('div');
+                heading.className = 'column-heading';
+                const headingLabel = document.createElement('div');
+                headingLabel.innerHTML = `<span class="column-dot"></span><h3>${STATUS_LABELS[status]}</h3>`;
+                const count = document.createElement('span');
+                count.className = 'column-count';
+                count.textContent = groupTodos.filter(todo => todo.status === status).length;
+                heading.append(headingLabel, count);
+                const list = document.createElement('div');
+                list.className = 'column-list';
+                const todos = groupTodos.filter(todo => todo.status === status);
+                if (!todos.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-column';
+                    empty.textContent = status === 'done' ? '완료한 업무가 여기에 모입니다.' : '아직 등록된 업무가 없습니다.';
+                    list.append(empty);
+                } else {
+                    todos.forEach(todo => list.append(createTodoCard(todo)));
+                }
+                column.append(heading, list);
+                groupBoard.append(column);
+            });
+            group.append(groupHeading, groupBoard);
+            elements.board.append(group);
         });
         elements.emptyBoard.hidden = Boolean(state.key && state.todos.length);
         $('emptyBoardTitle').textContent = state.key ? '아직 업무가 없습니다' : '운영 키를 입력해 주세요';
@@ -287,7 +357,6 @@
         const card = document.createElement('article');
         card.className = `todo-card${todo.status === 'done' ? ' is-done' : ''}`;
         card.dataset.id = todo.id;
-        const tour = state.tours.find(item => item.fldid === todo.tourFldid);
 
         const topline = document.createElement('div');
         topline.className = 'card-topline';
@@ -326,18 +395,18 @@
         due.value = todo.dueDate || '';
         due.setAttribute('aria-label', '업무 기한 수정');
         due.addEventListener('change', () => patchTodo(todo, { dueDate: due.value || null }));
-        dueRow.append(dueLabel, due);
+        const dueControls = document.createElement('div');
+        dueControls.className = 'due-controls';
+        const dday = document.createElement('span');
+        dday.className = `dday-badge${daysUntil(todo.dueDate) < 0 ? ' is-overdue' : ''}`;
+        dday.textContent = formatDDay(todo.dueDate);
+        dueControls.append(due, dday);
+        dueRow.append(dueLabel, dueControls);
 
         const created = document.createElement('div');
         created.className = 'created-at';
         created.textContent = `등록 ${formatDateTime(todo.createdAt)}`;
-        const tourInfo = document.createElement('div');
-        tourInfo.className = 'todo-trip-meta';
-        tourInfo.setAttribute('aria-label', '등록된 여행 정보');
-        tourInfo.textContent = tour
-            ? `🧳 ${tour.title}${tour.date ? ` · ${formatDate(tour.date)}` : ''}`
-            : `🧳 여행 ${todo.tourFldid}`;
-        details.append(tourInfo, dueRow, created);
+        details.append(dueRow, created);
 
         const actions = document.createElement('div');
         actions.className = 'card-actions';
