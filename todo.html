@@ -12,7 +12,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="todo.css">
+    <link rel="stylesheet" href="todo.css?v=20260813-4">
 </head>
 <body>
     <div class="app-shell">
@@ -122,8 +122,8 @@
                 </div>
                 <div class="empty-board" id="emptyBoard" hidden>
                     <span>🌱</span>
-                    <strong>아직 업무가 없습니다</strong>
-                    <p>＋ 일정 등록을 눌러 여행을 선택한 뒤 업무를 적어 주세요.</p>
+                    <strong id="emptyBoardTitle">운영 키를 입력해 주세요</strong>
+                    <p id="emptyBoardCopy">상단 운영 키를 입력하면 저장된 업무를 불러옵니다.</p>
                 </div>
             </section>
         </main>
@@ -149,6 +149,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <noscript><div class="no-script">이 업무 보드는 JavaScript가 필요합니다.</div></noscript>
-    <script src="todo.js" defer></script>
+    <script src="todo.js?v=20260813-4" defer></script>
 </body>
 </html>
