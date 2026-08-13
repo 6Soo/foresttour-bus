@@ -109,27 +109,43 @@
         return parts.length === 3 ? `${parts[0]}년 ${Number(parts[1])}월 ${Number(parts[2])}일` : value;
     }
 
-    function formatDateRange(tour) {
-        if (!tour?.date) return '출발일 미정';
-        if (!tour.returnDate || tour.returnDate === tour.date) return formatDate(tour.date);
-        return `${formatDate(tour.date)} — ${formatDate(tour.returnDate)}`;
+    function compactDateLabel(value) {
+        if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+        const [, month, day] = value.split('-').map(Number);
+        const date = new Date(`${value}T00:00:00+09:00`);
+        if (Number.isNaN(date.getTime())) return '';
+        const weekday = new Intl.DateTimeFormat('ko-KR', {
+            timeZone: 'Asia/Seoul', weekday: 'short',
+        }).format(date);
+        return `${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}(${weekday})`;
     }
 
-    function tourTitleIncludesDate(tour) {
-        if (!tour?.title || !tour.date) return false;
-        const [year, month, day] = tour.date.split('-');
-        const monthNumber = Number(month);
-        const dayNumber = Number(day);
-        return new RegExp(
-            `(?:${year}[-./ ]?${monthNumber}[-./ ]?${dayNumber}|${monthNumber}\\s*월\\s*${dayNumber}|${monthNumber}\\s*[./-]\\s*${dayNumber})`,
-        ).test(tour.title);
+    function compactTripDate(tour) {
+        const depart = compactDateLabel(tour?.date);
+        if (!depart) return '';
+        const returned = compactDateLabel(tour.returnDate);
+        return returned && returned !== depart ? `${depart}_${returned}` : depart;
+    }
+
+    function stripLeadingTourDate(title) {
+        if (typeof title !== 'string') return '';
+        const datePart = String.raw`(?:20\d{2}\s*년\s*)?\d{1,2}\s*(?:월\s*\d{1,2}|[./-]\s*\d{1,2})(?:\s*일)?(?:\s*\([^)]*\))?`;
+        const shortPart = String.raw`\d{1,2}(?:\s*일)?(?:\s*\([^)]*\))?`;
+        const rangePart = String.raw`(?:\s*(?:~|〜|～|–|—|-)\s*(?:${datePart}|${shortPart})|\s*,\s*${shortPart})*`;
+        const match = title.match(new RegExp(`^\\s*${datePart}${rangePart}`));
+        if (!match) return title.trim();
+        return title.slice(match[0].length).replace(/^\s+/, ' ');
     }
 
     function tourDisplayTitle(tour) {
         if (!tour) return '여행 정보 없음';
-        return tourTitleIncludesDate(tour) || !tour.date
-            ? tour.title
-            : `${tour.title} · ${formatDateRange(tour)}`;
+        const compactDate = compactTripDate(tour);
+        const rest = stripLeadingTourDate(tour.title);
+        const normalized = compactDate
+            ? `${compactDate}${rest}`
+            : tour.title;
+        const leader = typeof tour.leader === 'string' ? tour.leader.trim() : '';
+        return leader ? `[${leader}] ${normalized}` : normalized;
     }
 
     function daysUntil(value) {
@@ -246,9 +262,9 @@
         }
         elements.tourMeta.replaceChildren();
         const meta = [];
-        if (!tourTitleIncludesDate(tour)) meta.push(formatDateRange(tour));
+        const compactDate = compactTripDate(tour);
+        if (compactDate) meta.push(compactDate);
         meta.push(tour.nights ? `${tour.nights}박` : '여행');
-        if (tour.leader) meta.push(`${tour.leader} 대장`);
         elements.tourMeta.textContent = meta.join(' · ');
     }
 
@@ -321,11 +337,6 @@
             const groupTitle = document.createElement('strong');
             groupTitle.textContent = `🧳 ${tour ? tourDisplayTitle(tour) : `여행 ${tourFldid}`}`;
             groupHeading.append(groupTitle);
-            if (tour?.returnDate && !tourTitleIncludesDate(tour)) {
-                const range = document.createElement('span');
-                range.textContent = formatDateRange(tour);
-                groupHeading.append(range);
-            }
             const groupBoard = document.createElement('div');
             groupBoard.className = 'trip-group-board';
             ['todo', 'doing', 'done'].forEach(status => {
@@ -399,34 +410,13 @@
                 else title.value = todo.title;
             });
         }
-        const remove = document.createElement('button');
-        remove.className = 'delete-todo';
-        remove.type = 'button';
-        remove.textContent = '×';
-        remove.setAttribute('aria-label', '업무 삭제');
-        remove.addEventListener('click', () => deleteTodo(todo));
-        topline.append(statusIcon, title, remove);
+        const dday = document.createElement('span');
+        dday.className = `dday-badge card-dday${daysUntil(todo.dueDate) < 0 ? ' is-overdue' : ''}`;
+        dday.textContent = formatDDay(todo.dueDate);
+        topline.append(statusIcon, title, dday);
 
         const details = document.createElement('div');
         details.className = 'card-details';
-        const dueRow = document.createElement('div');
-        dueRow.className = 'detail-row';
-        const dueLabel = document.createElement('span');
-        dueLabel.className = 'detail-label';
-        dueLabel.textContent = '📅 기한';
-        const due = document.createElement('input');
-        due.className = `due-input${todo.status !== 'done' && todo.dueDate && todo.dueDate < todayKst() ? ' is-overdue' : ''}`;
-        due.type = 'date';
-        due.value = todo.dueDate || '';
-        due.setAttribute('aria-label', '업무 기한 수정');
-        due.addEventListener('change', () => patchTodo(todo, { dueDate: due.value || null }));
-        const dueControls = document.createElement('div');
-        dueControls.className = 'due-controls';
-        const dday = document.createElement('span');
-        dday.className = `dday-badge${daysUntil(todo.dueDate) < 0 ? ' is-overdue' : ''}`;
-        dday.textContent = formatDDay(todo.dueDate);
-        dueControls.append(due, dday);
-        dueRow.append(dueLabel, dueControls);
 
         if (isStructured) {
             const facts = document.createElement('div');
@@ -451,11 +441,6 @@
             details.append(facts);
         }
 
-        const created = document.createElement('div');
-        created.className = 'created-at';
-        created.textContent = `등록 ${formatDateTime(todo.createdAt)}`;
-        details.append(dueRow, created);
-
         const actions = document.createElement('div');
         actions.className = 'card-actions';
         ['todo', 'doing', 'done'].forEach(status => {
@@ -468,7 +453,9 @@
             actions.append(button);
         });
 
-        card.append(topline, details, actions);
+        card.append(topline);
+        if (details.children.length) card.append(details);
+        card.append(actions);
         return card;
     }
 
@@ -497,24 +484,6 @@
         if (index >= 0) state.todos[index] = next;
         else state.todos.push(next);
         renderAll();
-    }
-
-    async function deleteTodo(todo) {
-        if (!window.confirm(`“${todo.title}” 업무를 삭제할까요?`)) return;
-        try {
-            await request('/api/public/todos', {
-                method: 'DELETE',
-                body: JSON.stringify({ id: todo.id, updatedAt: todo.updatedAt }),
-            });
-            state.todos = state.todos.filter(item => item.id !== todo.id);
-            renderAll();
-            showToast('업무를 삭제했습니다.');
-        } catch (error) {
-            if (error.status === 409 && error.data?.todo) {
-                replaceTodo(error.data.todo);
-                showToast('다른 화면의 최신 내용을 반영했습니다.');
-            } else if (!handleAuthError(error)) showToast(error.message);
-        }
     }
 
     async function createTodo(event) {
