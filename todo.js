@@ -264,6 +264,7 @@
 
     function renderBoard() {
         elements.board.dataset.activeStatus = state.activeStatus;
+        elements.board.hidden = !state.key;
         ['todo', 'doing', 'done'].forEach(status => {
             const list = $(`list${status[0].toUpperCase()}${status.slice(1)}`);
             list.replaceChildren();
@@ -277,7 +278,11 @@
                 todos.forEach(todo => list.append(createTodoCard(todo)));
             }
         });
-        elements.emptyBoard.hidden = !state.key || state.todos.length > 0;
+        elements.emptyBoard.hidden = Boolean(state.key && state.todos.length);
+        $('emptyBoardTitle').textContent = state.key ? '아직 업무가 없습니다' : '운영 키를 입력해 주세요';
+        $('emptyBoardCopy').textContent = state.key
+            ? '＋ 일정 등록을 눌러 여행을 선택한 뒤 업무를 적어 주세요.'
+            : '상단 운영 키를 입력하면 저장된 업무를 불러옵니다.';
     }
 
     function createTodoCard(todo) {
