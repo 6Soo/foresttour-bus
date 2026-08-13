@@ -12,7 +12,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <link rel="stylesheet" href="todo.css?v=20260813-5">
+    <link rel="stylesheet" href="todo.css?v=20260813-6">
 </head>
 <body>
     <div class="app-shell">
@@ -91,29 +91,7 @@
                     </form>
                 </section>
 
-                <div class="board" id="board">
-                    <article class="board-column column-todo" data-column-status="todo">
-                        <div class="column-heading">
-                            <div><span class="column-dot"></span><h3>할 일</h3></div>
-                            <span class="column-count" id="countTodo">0</span>
-                        </div>
-                        <div class="column-list" id="listTodo"></div>
-                    </article>
-                    <article class="board-column column-doing" data-column-status="doing">
-                        <div class="column-heading">
-                            <div><span class="column-dot"></span><h3>진행중</h3></div>
-                            <span class="column-count" id="countDoing">0</span>
-                        </div>
-                        <div class="column-list" id="listDoing"></div>
-                    </article>
-                    <article class="board-column column-done" data-column-status="done">
-                        <div class="column-heading">
-                            <div><span class="column-dot"></span><h3>완료</h3></div>
-                            <span class="column-count" id="countDone">0</span>
-                        </div>
-                        <div class="column-list" id="listDone"></div>
-                    </article>
-                </div>
+                <div class="board" id="board"></div>
                 <div class="empty-board" id="emptyBoard" hidden>
                     <span>🌱</span>
                     <strong id="emptyBoardTitle">운영 키를 입력해 주세요</strong>
@@ -143,6 +121,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <noscript><div class="no-script">이 업무 보드는 JavaScript가 필요합니다.</div></noscript>
-    <script src="todo.js?v=20260813-5" defer></script>
+    <script src="todo.js?v=20260813-6" defer></script>
 </body>
 </html>
