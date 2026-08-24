@@ -1,4 +1,4 @@
-# foresttour-bus
+﻿# foresttour-bus
 
 숲길따라 감성여행 도구 모음. GitHub Pages로 배포됩니다 (bus.foresttour.kr).
 빌드 과정 없는 순수 정적 사이트입니다 (HTML/CSS/JS).
@@ -169,6 +169,10 @@ import 미리보기에서 사용자가 분류를 고치면 `localStorage('forest
 - 커밋 메시지는 기존 스타일(`feat:`, `fix:`, `style:`)을 따른다.
 
 ## 모델 위임 규칙 (2026-08-04)
+> **실행자 기본값 갱신(전역 개정 2026-08-24 준용)**: 조사·단순 구현·문서 초안 등 일반 작업은
+> agy `gemini-3.7-flash-high`(ACP) 우선 위임 — 위임 전 고위험 사전판정·민감정보 최소화, 수행 중
+> 고위험 결합 시 즉시 증단 반환, 쿼터는 세션 차단 fail-fast. 아래 문구 중 이와 충돌하는 실행자
+> 지정은 본 줄이 우선하며, 설계 확정·고위험 판정·검증 강도는 기존 유지다.
 
 기본 초안·설계는 GPT-5.6 Luna max로 수행하고, 모든 실질 답변은 GPT-5.6 Sol medium이
 독립적으로 반박·검증한 뒤 확정한다. 저추론·단순 구현·일반 웹검색은 AGY Gemini 3.6 Flash low를
