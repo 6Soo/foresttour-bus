@@ -10,6 +10,7 @@
     --accent-color: #3182f6;
     --accent-hover: #1b64da;
     --seat-available: #3182f6;
+    --seat-guide: #6d28d9;
     --seat-driver: linear-gradient(135deg, #64748b, #475569);
     --seat-door: #f2f4f6;
     --card-border: #e5e8eb;
@@ -264,6 +265,17 @@ main {
     outline: none;
 }
 
+.seat.guide {
+    background: var(--seat-guide);
+    color: #fff;
+    cursor: text;
+}
+
+.seat.guide:focus-visible {
+    outline: 2px solid #6d28d9;
+    outline-offset: 2px;
+}
+
 .seat.jump {
     background: rgba(49, 130, 246, 0.12);
     border: 1px dashed var(--accent-color);
@@ -409,6 +421,11 @@ main {
 .capturing .seat.available {
     background: var(--seat-available) !important;
     color: #ffffff !important;
+}
+
+.capturing .seat.guide {
+    background: var(--seat-guide) !important;
+    color: #fff !important;
 }
 
 .capturing .seat.jump {
